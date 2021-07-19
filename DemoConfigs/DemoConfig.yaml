@@ -1,0 +1,88 @@
+import: /home/root/AutomationOne/DemoConfigs/DemoCallback.py
+
+
+logging:
+  handlers:
+    console:
+      class: logging.StreamHandler
+      level: INFO
+      formatter: AutomationOne
+    file:
+      class: logging.handlers.RotatingFileHandler
+      formatter: AutomationOnePlusTime
+      level: DEBUG
+      filename: AutomationOne.log
+      maxBytes: 1000000
+      backupCount: 1
+
+interfaces:
+  - name: &mqtt MQTT Interface
+    type: MQTT
+    clientID: A1GW-SDK1-004
+    host: test.mosquitto.org
+    port: 1883
+    topicSub: /AutomationOne/A1GW-SDK1-004/cmd
+    topicPub: /AutomationOne/A1GW-SDK1-004/Values
+    parser: jsonParserX
+    encoder: jsonEncoder
+
+    topicAPI: /AutomationOne/A1GW-SDK1-004/message
+
+
+nodes:
+  - name: &out Harmonischer Oszillator [MQTT]
+    type: MQTT
+    interface: *mqtt
+    accessType: write
+    mqttID: Harmonischer Oszillator
+
+  - name: Frequenz
+    type: MQTT
+    interface: *mqtt
+    accessType: read
+    mqttID: Frequenz
+    defaultValue: 0.2 # => 1 Periode in ungefähr einer halben Minute( alle 10*pi Sekunden )
+    onChange: logValue
+
+  - name: Amplitude
+    type: MQTT
+    interface: *mqtt
+    accessType: read
+    mqttID: Amplitude
+    defaultValue: 1.0
+    onChange: logValue
+
+  - name: Phasenverschiebung
+    type: MQTT
+    interface: *mqtt
+    accessType: read
+    mqttID: Phase
+    defaultValue: 0.0
+    onChange: logValue
+
+  - name: Signalstärke
+    type: Function
+    callback: SignalStrength
+    frequency: 5
+
+  - name: Signalstärke [MQTT]
+    type: MQTT
+    interface: *mqtt
+    accessType: write
+    mqttID: GSM Signal Stärke in dBm
+    
+
+
+connections:
+  - name: Sinus-Berechnung
+    type: custom
+    callback: SineComputation
+    inNode: [Frequenz, Amplitude, Phasenverschiebung]
+    outNode: *out
+    frequency: 1.0 # Sekunden
+
+  - name: Signalstärke [Connection]
+    inNode: Signalstärke
+    outNode: Signalstärke [MQTT]
+
+
