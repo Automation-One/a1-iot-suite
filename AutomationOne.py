@@ -1,4 +1,5 @@
 #! /usr/bin/python3
+from pymodbus.pdu import ExceptionResponse
 import yaml
 
 from pymodbus.client.sync import ModbusSerialClient
@@ -623,7 +624,7 @@ class ModbusNode(Node):
     if self.read:
       data = self.interface.read(self.address, self._count, self.unit,self.holding)
       #logger.debug("[Node {}] received data: {}".format(self.name,data.registers))
-      if isinstance(data,ModbusIOException):
+      if isinstance(data,ModbusIOException) or isinstance(data,ExceptionResponse):
         logger.error("[Node {}] {}".format(self.name,data))
         return self.value
       decoder =  BinaryPayloadDecoder.fromRegisters(data.registers,byteorder=self.byteorder,wordorder=self.wordorder)

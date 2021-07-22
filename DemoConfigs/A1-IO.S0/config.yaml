@@ -27,19 +27,22 @@ nodes:
   - name: S1
     type: Modbus
     interface: *modbus1
-    unit: 65
-    address: 1
+    unit: 1
+    address: 64
     dataType: int64
     accessType: read
     onChange: logValue
+    HoldingRegister: True
+    frequency:  1
 
   - name: S2
     type: Modbus
     interface: *modbus1
-    unit: 69
-    address: 1
+    unit: 1
+    address: 68
     dataType: int64
     accessType: read
     onChange: logValue
-
+    HoldingRegister: True
+    frequency: 1
   
