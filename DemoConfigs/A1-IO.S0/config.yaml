@@ -33,7 +33,8 @@ nodes:
     accessType: read
     onChange: logValue
     HoldingRegister: True
-    frequency:  1
+    pollRate:  1
+    sensitivity: 1
 
   - name: S2
     type: Modbus
@@ -44,5 +45,6 @@ nodes:
     accessType: read
     onChange: logValue
     HoldingRegister: True
-    frequency: 1
+    pollRate: 1
+    sensitivity: 1
   
