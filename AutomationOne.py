@@ -529,7 +529,7 @@ class Node:
     logger.debug("Node {} set to {}.".format(self.name,value))
     self.value = value
 
-    if not self.lastValue:
+    if not self.lastValue and not self.lastValue == 0:
       self.lastValue = self.value
       self.onChange()
     elif (not isinstance(self.value,list)  and abs(self.value-self.lastValue)>self.sensitivity-eps):
