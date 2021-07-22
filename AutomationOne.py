@@ -588,8 +588,16 @@ class ModbusNode(Node):
 
     if self.dataType == "int16":
       self._count = 1
+    elif self.dataType == "int32":
+      self._count = 2
+    elif self.dataType == "int64":
+      self._count = 4
+    elif self.dataType == "float16":
+      self._count = 1
     elif self.dataType == "float32":
       self._count = 2
+    elif self.dataType == "float64":
+      self._count = 4
     else:
       raise NotImplementedError("DataType {} not implemented for ModbusNode.".format(self.dataType))
 
