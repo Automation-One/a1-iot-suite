@@ -577,7 +577,7 @@ class ModbusNode(Node):
     self.wordorder = config.get("wordorder")
 
     if self.dataType[-1]=='i':
-      if self.wordorder:
+      if self.wordorder is not None:
         logger.warning("Node '{}': Wordorder superseded by dataType")
       self.wordorder = '>'
       self.dataType = self.dataType[:-1]
@@ -592,6 +592,12 @@ class ModbusNode(Node):
     elif self.dataType == "int32":
       self._count = 2
     elif self.dataType == "int64":
+      self._count = 4
+    elif self.dataType == "uint16":
+      self._count = 1
+    elif self.dataType == "uint32":
+      self._count = 2
+    elif self.dataType == "uint64":
       self._count = 4
     elif self.dataType == "float16":
       self._count = 1
@@ -628,20 +634,27 @@ class ModbusNode(Node):
         logger.error("[Node {}] {}".format(self.name,data))
         return self.value
       decoder =  BinaryPayloadDecoder.fromRegisters(data.registers,byteorder=self.byteorder,wordorder=self.wordorder)
+
       if self.dataType == "int16":
         value = decoder.decode_16bit_int()
       elif self.dataType == "int32":
         value = decoder.decode_32bit_int()
       elif self.dataType == "int64":
         value = decoder.decode_64bit_int()
+
+      elif self.dataType == "uint16":
+        value = decoder.decode_16bit_uint()
+      elif self.dataType == "uint32":
+        value = decoder.decode_32bit_uint()
+      elif self.dataType == "uint64":
+        value = decoder.decode_64bit_uint()
+
       elif self.dataType == "float32":
         value = decoder.decode_32bit_float()
       elif self.dataType == "float16":
         value = decoder.decode_16bit_float()
       elif self.dataType == "float64":
         value = decoder.decode_64bit_float()
-
-      
 
       #logger.debug("[VALUE] {} => {}".format(self.name,value))
       self.setValue(value)
@@ -663,6 +676,14 @@ class ModbusNode(Node):
         builder.add_32bit_int(int(self.value))      
       elif self.dataType == "int64":
         builder.add_64bit_int(int(self.value))
+
+      elif self.dataType == "uint16":
+        builder.add_16bit_uint(int(self.value))
+      elif self.dataType == "uint32":
+        builder.add_32bit_uint(int(self.value))      
+      elif self.dataType == "uint64":
+        builder.add_64bit_uint(int(self.value))
+
       elif self.dataType == "float16":
         builder.add_16bit_float(float(self.value))
       elif self.dataType == "float32":
