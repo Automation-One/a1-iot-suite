@@ -19,6 +19,8 @@ from datetime import timedelta
 
 import sys
 
+import os
+
 
 
 
@@ -30,6 +32,7 @@ streamHandler.setLevel(logging.INFO)
 streamFormatter = logging.Formatter('[%(levelname)s]  %(message)s')
 streamHandler.setFormatter(streamFormatter)
 logger.addHandler(streamHandler)
+
 
 
 
@@ -69,7 +72,7 @@ class Handler:
     self.connections = {}
 
     self.timeloop = None
-    logging.getLogger("timeloop").setLevel(logging.CRITICAL)
+    
 
   def start(self):
     return self._start()
@@ -95,6 +98,7 @@ class Handler:
   def _create_timeloop(self):
     if not self.timeloop:
       self.timeloop = Timeloop()
+      logging.getLogger("timeloop").setLevel(logging.CRITICAL)
       for interface in self.interfaces.values():
         interface._init_timeloop(self.timeloop)
       for node in self.nodes.values():
@@ -155,11 +159,14 @@ class Handler:
     if "logging" in config:
       initLogger(config.get("logging"))
     else:
-      fileHandler = logging.handlers.RotatingFileHandler("/var/log/AutomationOne.log",maxBytes=1e6,backupCount=1)
+      fileHandler = logging.handlers.RotatingFileHandler("AutomationOne.log",maxBytes=1e6,backupCount=1)
       fileFormatter = logging.Formatter('%(asctime)s [%(levelname)s]  %(message)s')
       fileHandler.setFormatter(fileFormatter)
       logger.addHandler(fileHandler)
     
+    if "TZ" in config:
+      os.environ["TZ"] = config["TZ"]
+      time.tzset()
     
     if "import" in config:
 
@@ -305,7 +312,7 @@ class ModbusInterface(Interface):
   def __init__(self,handler,config = {}):
     super().__init__(handler,config)
     self._method = config.get("method","rtu")
-    self._baudrate = int(config.get("baudrate", 38400))
+    self._baudrate = config.get("baudrate")
     self._port = config.get("port","/dev/ttymxc2")
     self._parity = config.get("parity","E")
     self._stopbits = config.get("stopbits",1)
@@ -826,7 +833,10 @@ class CustomConnection(Connection):
   def __init__(self,handler,config):
     super().__init__(handler,config)
     self.callbackName = config.get("callback")
-    self.callback = getattr(handler.callbackModule,self.callbackName)
+    if self.callbackName:
+      self.callback = getattr(handler.callbackModule,self.callbackName)
+    else:
+      self.callback = lambda val: val
     self.split = config.get("split",False) #Splits the value array over multiple outnodes
   
   def execute(self):
@@ -849,7 +859,7 @@ class CustomConnection(Connection):
 class ConditionalConnection(SimpleConnection):
   def __init__(self,handler,config):
     super().__init__(handler,config)
-    self.conditionNodeName = config.get("conditionNodeName")
+    self.conditionNodeName = config.get("conditionNode")
     self.conditionNode = handler.nodes.get("conditionNode")
   
   def evalCondition(self):
