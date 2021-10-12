@@ -18,71 +18,68 @@ logging:
 interfaces:
   - name: &mqtt MQTT Interface
     type: MQTT
-    clientID: A1GW-SDK1-004
+    clientID: A1GW-SDK1-005
     host: test.mosquitto.org
     port: 1883
-    topicSub: /AutomationOne/A1GW-SDK1-004/cmd
-    topicPub: /AutomationOne/A1GW-SDK1-004/Values
-    parser: jsonParserX
+    topicSub: /AutomationOne/A1GW-SDK1-005/cmd
+    topicPub: /AutomationOne/A1GW-SDK1-005/Values
+    parser: jsonParser
     encoder: jsonEncoder
 
-    topicAPI: /AutomationOne/A1GW-SDK1-004/message
+  - name: &mod Modbus Interface
+    type: Modbus
+    port: /dev/ttymxc0
+    method: rtu
+    baudrate: 38400
+    parity: E
 
+
+  
 
 nodes:
-  - name: &out Harmonischer Oszillator [MQTT]
+  - name: Drehgeber [MQTT]
     type: MQTT
     interface: *mqtt
     accessType: write
     mqttID: Harmonischer Oszillator
 
-  - name: Frequenz
+  - name: Sollwert
     type: MQTT
     interface: *mqtt
     accessType: read
-    mqttID: Frequenz
-    defaultValue: 0.2 # => 1 Periode in ungefähr einer halben Minute( alle 10*pi Sekunden )
+    mqttID: Sollwert
     onChange: logValue
 
-  - name: Amplitude
-    type: MQTT
-    interface: *mqtt
+  - name: Drehgeber
+    type: Modbus
+    interface: *mod
+    unit: 11
+    address: 0
     accessType: read
-    mqttID: Amplitude
-    defaultValue: 1.0
+    HoldingRegister: False
+    dataType: uint16
+    pollRate: 2
+    sensitivity: 10
     onChange: logValue
 
-  - name: Phasenverschiebung
-    type: MQTT
-    interface: *mqtt
-    accessType: read
-    mqttID: Phase
-    defaultValue: 0.0
-    onChange: logValue
-
-  - name: Signalstärke
-    type: Function
-    callback: SignalStrength
-    frequency: 5
-
-  - name: Signalstärke [MQTT]
-    type: MQTT
-    interface: *mqtt
+  - name: Klappe
+    type: Modbus
+    interface: *mod
+    unit: 12
+    address: 0
     accessType: write
-    mqttID: GSM Signal Stärke in dBm
-    
-
+    dataType: int16
+    onChange: logValue
 
 connections:
-  - name: Sinus-Berechnung
-    type: custom
-    callback: SineComputation
-    inNode: [Frequenz, Amplitude, Phasenverschiebung]
-    outNode: *out
-    frequency: 1.0 # Sekunden
-
   - name: Signalstärke [Connection]
-    inNode: Signalstärke
-    outNode: Signalstärke [MQTT]
+    inNode: Drehgeber
+    outNode: Drehgeber [MQTT]
 
+  - name: Drehgeber Klappe
+    inNode: Drehgeber
+    outNode: Klappe    
 
+  - name: Sollwert Klappe
+    inNode: Sollwert
+    outNode: Klappe
