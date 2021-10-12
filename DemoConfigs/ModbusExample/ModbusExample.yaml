@@ -1,0 +1,35 @@
+
+
+interfaces:
+  - name: Modbus Interface
+    type: Modbus
+    port: /dev/ttymxc2
+    method: rtu
+    baudrate: 115200
+    parity: N
+
+nodes:
+  - name: Drehschalter
+    type: Modbus
+    interface: Modbus Interface
+    unit: 1
+    address: 64
+    accessType: read
+    HoldingRegister: True
+    dataType: float32
+    pollRate:  15
+    sensitivity: 0.1
+
+  - name: Ventil
+    type: Modbus
+    interface: Modbus Interface
+    unit: 2
+    address: 12
+    dataType: float32
+    accessType: write
+
+connections:
+  - name: Drehschalter - Ventil
+    inNode: Drehschalter
+    outNode: Ventil
+    
