@@ -1,4 +1,4 @@
-import: /home/root/AutomationOne/DemoConfigs/DemoCallback.py
+import: /home/root/AutomationOne/DemoConfigs/Misc/SignalStrengthCallback.py
 
 
 logging:
