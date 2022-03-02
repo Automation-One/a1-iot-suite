@@ -44,7 +44,7 @@ def main():
 
   parser.add_argument("value", nargs ="?",type=str,help = "Value for functioncodes 5,6,15 and 16")
 
-  parser.add_argument('--verbose','-v', dest='verbose',action="store_true", help = "Verbose Output")
+  parser.add_argument('--verbose','-v', dest='verbose',action="store_true", help = "Verbose Output Including the returned register values")
 
   parser.add_argument("--dataType","-F",type = str, default = "int16", help = "Dateiformat int, uint, float with 16, 32 or 64 bit (default = int16)")
   parser.add_argument("--wordorder",type = str, default = '<', help = "Default: <")
@@ -54,7 +54,7 @@ def main():
   if args.verbose:
     logger.setLevel(logging.DEBUG)
 
-  logger.debug("Input Arguments: {}".format(args))
+  #logger.debug("Input Arguments: {}".format(args))
 
   if args.config:
     try:
@@ -169,21 +169,24 @@ def run(args):
     if isinstance(result,modbus_exception_list):
         logger.exception(result)
         return False
-    logger.info("Returned Values: {}".format(result.registers))
+    if args.verbose:
+      logger.info("Returned Values: {}".format(result.registers))
   
   elif args.functionCode == 3:
     result =  client.read_holding_registers(args.address, count=args.count,unit = args.unit)
     if isinstance(result,modbus_exception_list):
       logger.exception(result)
       return False
-    logger.info("Returned Values: {}".format(result.registers))
+    if args.verbose:
+      logger.info("Returned Values: {}".format(result.registers))
   
   elif args.functionCode == 4:
     result =  client.read_input_registers(args.address, count=args.count,unit = args.unit)
     if isinstance(result,modbus_exception_list):
         logger.exception(result)
         return False
-    logger.info("Returned Values: {}".format(result.registers))
+    if args.verbose:
+      logger.info("Returned Values: {}".format(result.registers))
 
   elif args.functionCode == 6:
     try:
