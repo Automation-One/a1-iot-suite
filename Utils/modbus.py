@@ -129,14 +129,24 @@ def main():
   if not args.count:
     args.count = 1
 
+
+  if args.functionCode == 6 and args.count != 1:
+    logger.error("Only one value can be written using function Code 6")
+    return False
+
+  if args.count <1:
+    logger.error("Count must be a positive integer!")
+    return False
+
+  args.word_count = args.count
   try:
     bit_number = int(args.dataType[-2:])
-    if bit_number == 32:
-      args.count*=2
+    if bit_number == 16:
+      args.count = args.word_count * 1
+    elif bit_number == 32:
+      args.count = args.word_count * 2
     elif bit_number == 64:
-      args.count*=4
-    elif bit_number == 16:
-      pass
+      args.count = args.word_count * 4
     else:
       print("Unsupported Bitnumber in DataType!")
       return False
@@ -189,30 +199,36 @@ def run(args):
 
   if args.functionCode in [3,4]:
     decoder =  BinaryPayloadDecoder.fromRegisters(result.registers,byteorder=args.byteorder,wordorder=args.wordorder)
-    if args.dataType == "int16":
-      value = decoder.decode_16bit_int()
-    elif args.dataType == "int32":
-      value = decoder.decode_32bit_int()
-    elif args.dataType == "int64":
-      value = decoder.decode_64bit_int()
+    values = []
+    for _ in range(args.word_count):
+      if args.dataType == "int16":
+        value = decoder.decode_16bit_int()
+      elif args.dataType == "int32":
+        value = decoder.decode_32bit_int()
+      elif args.dataType == "int64":
+        value = decoder.decode_64bit_int()
 
-    elif args.dataType == "uint16":
-      value = decoder.decode_16bit_uint()
-    elif args.dataType == "uint32":
-      value = decoder.decode_32bit_uint()
-    elif args.dataType == "uint64":
-      value = decoder.decode_64bit_uint()
+      elif args.dataType == "uint16":
+        value = decoder.decode_16bit_uint()
+      elif args.dataType == "uint32":
+        value = decoder.decode_32bit_uint()
+      elif args.dataType == "uint64":
+        value = decoder.decode_64bit_uint()
 
-    elif args.dataType == "float32":
-      value = decoder.decode_32bit_float()
-    elif args.dataType == "float16":
-      value = decoder.decode_16bit_float()
-    elif args.dataType == "float64":
-      value = decoder.decode_64bit_float()
+      elif args.dataType == "float32":
+        value = decoder.decode_32bit_float()
+      elif args.dataType == "float16":
+        value = decoder.decode_16bit_float()
+      elif args.dataType == "float64":
+        value = decoder.decode_64bit_float()
+      else:
+        logger.warning("Datatype is not supported.")
+        return False
+      values.append(value)
+    if args.word_count == 1:
+      logger.info("Parsed Value: {}".format(values[0]))
     else:
-      logger.warning("Datatype is not supported.")
-      return False
-    logger.info("Parsed Value: {}".format(value))
+      logger.info("Parsed Values: {}".format(values))
 
     
   
