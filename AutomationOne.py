@@ -81,6 +81,9 @@ class Handler:
     return self._stop()
     
   def _initialize(self):
+    if self.initCallback:
+      logger.debug("Calling initCallback {}".format(self.initCallbackName))
+      self.initCallback(self)
     for interface in self.interfaces.values():
       logger.debug("Calling start() for interface {}.".format(interface.name))
       interface.start()
@@ -90,9 +93,6 @@ class Handler:
     for connection in self.connections.values():
       logger.debug("Calling start() for connection {}.".format(connection.name))
       connection.start()
-    if self.initCallback:
-      logger.debug("Calling initCallback {}".format(self.initCallbackName))
-      self.initCallback(self)
     self._start()
 
   def _create_timeloop(self):
@@ -240,7 +240,7 @@ class Handler:
       return True
 
   def parseNode(self,nodeConfig):
-    nodeType = nodeConfig.get("type")
+    nodeType = nodeConfig.get("type","default")
     try:
       if nodeType == "Modbus":
         node = ModbusNode(self,nodeConfig)
@@ -248,6 +248,8 @@ class Handler:
         node = FunctionNode(self,nodeConfig)
       elif nodeType == "MQTT":
         node = MqttNode(self,nodeConfig)
+      elif nodeType == "default":
+        node = Node(self,nodeConfig)
       else:
         logger.error("The node type was not recognized! (config = {})".format(nodeConfig))
         return False
@@ -512,7 +514,7 @@ class Node:
     self.handler = handler
     self.name = config.get("name")
 
-    self.value = config.get("defaultValue",None)
+    self.value = config.get("default",None)
     self.lastValue = self.value
 
     self.onChangeConnections = []
@@ -536,12 +538,20 @@ class Node:
     logger.debug("Node {} set to {}.".format(self.name,value))
     self.value = value
 
-    if not self.lastValue and not self.lastValue == 0:
-      self.lastValue = self.value
-      self.onChange()
-    elif (not isinstance(self.value,list)  and abs(self.value-self.lastValue)>self.sensitivity-eps):
-      self.lastValue = self.value
-      self.onChange()
+    try:
+      if not self.lastValue and not self.lastValue == 0:
+        self.lastValue = self.value
+        self.onChange()
+      elif abs(self.value-self.lastValue)>self.sensitivity-eps:
+        self.lastValue = self.value
+        self.onChange()
+    except:
+      if self.sensitivity <= 0 or self.lastValue != self.value:
+        self.lastValue = self.value
+        self.onChange()
+      
+
+
 
   def onChange(self):
     self.onChangeCallback(self)
@@ -588,11 +598,12 @@ class ModbusNode(Node):
         logger.warning("Node '{}': Wordorder superseded by dataType")
       self.wordorder = '>'
       self.dataType = self.dataType[:-1]
-    else:
-      if not self.wordorder:
-        self.wordorder = '<'
-      if not self.byteorder:
-        self.byteorder = '>'
+    if not self.wordorder:
+      self.wordorder = '<'
+    if not self.byteorder:
+      self.byteorder = '>'
+    
+    self.retries = config.get("retries",1)
 
     if self.dataType == "int16":
       self._count = 1
@@ -613,14 +624,14 @@ class ModbusNode(Node):
     elif self.dataType == "float64":
       self._count = 4
     else:
-      raise NotImplementedError("DataType {} not implemented for ModbusNode.".format(self.dataType))
+      raise NotImplementedError(f"DataType {self.dataType} not implemented for ModbusNode.")
 
     self.holding = config.get("HoldingRegister",False)
 
     self.accessType = config.get("accessType")
     self.read = not (self.accessType=="write")
     if self.accessType and self.accessType not in ["read","write"]:
-      logger.warning("AccessType '{}' for Modbus Node {} not recognized. Assuming read access.".format(self.accessType,self.name))
+      logger.warning(f"AccessType '{self.accessType}' for Modbus Node {self.name} not recognized. Assuming read access.")
 
     self.doOnStartup = config.get("doOnStartup", self.read)
 
@@ -635,11 +646,17 @@ class ModbusNode(Node):
 
   def pullValue(self):
     if self.read:
-      data = self.interface.read(self.address, self._count, self.unit,self.holding)
-      #logger.debug("[Node {}] received data: {}".format(self.name,data.registers))
-      if isinstance(data,ModbusIOException) or isinstance(data,ExceptionResponse):
-        logger.error("[Node {}] {}".format(self.name,data))
-        return self.value
+      for _ in range(self.retries):
+        data = self.interface.read(self.address, self._count, self.unit,self.holding)
+        #logger.debug("[Node {}] received data: {}".format(self.name,data.registers))
+        if isinstance(data,ModbusIOException) or isinstance(data,ExceptionResponse):
+          logger.error("[Node {}] {}".format(self.name,data))
+          return self.value
+        try:
+          if len(data.registers)>0:
+            break
+        except:
+          pass
       decoder =  BinaryPayloadDecoder.fromRegisters(data.registers,byteorder=self.byteorder,wordorder=self.wordorder)
 
       if self.dataType == "int16":
@@ -812,12 +829,16 @@ class SimpleConnection(Connection):
     super().__init__(handler,config)
     self.factor = config.get("factor",1)
     self.offset = config.get("offset",0)
+    self.dictionary = config.get("as_dictionary",False)
 
   def execute(self):
     super().execute()
     try:
       if isinstance(self.inNode,list):
-        value = [node.getValue()*self.factor+self.offset for node in self.inNode]
+        if self.dictionary:
+          value = {node.name:node.getValue()*self.factor+self.offset for node in self.inNode}
+        else:
+          value = [node.getValue()*self.factor+self.offset for node in self.inNode]
       else:
         value = self.inNode.getValue()*self.factor+self.offset
       self.outNode.setValue(value)
