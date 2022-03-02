@@ -9,6 +9,7 @@ import yaml
 
 from pymodbus.client.sync import ModbusSerialClient
 from pymodbus.exceptions import ModbusIOException
+from pymodbus.pdu import ExceptionResponse
 from pymodbus.payload import BinaryPayloadDecoder
 
 logger = logging.getLogger(__name__)
@@ -18,7 +19,7 @@ streamHandler = logging.StreamHandler()
 logger.addHandler(streamHandler)
 
 
-
+modbus_exception_list = (ModbusIOException,ExceptionResponse)
 
 
 
@@ -45,7 +46,7 @@ def main():
 
   parser.add_argument('--verbose','-v', dest='verbose',action="store_true", help = "Verbose Output")
 
-  parser.add_argument("--datatype","-F",type = str, default = "int16", help = "Dateiformat int16,float32 (default = int16)")
+  parser.add_argument("--dataType","-F",type = str, default = "int16", help = "Dateiformat int, uint, float with 16, 32 or 64 bit (default = int16)")
   parser.add_argument("--wordorder",type = str, default = '<', help = "Default: <")
   parser.add_argument("--byteorder", type = str, default = '>', help = "Default: >")
 
@@ -128,7 +129,21 @@ def main():
   if not args.count:
     args.count = 1
 
+  try:
+    bit_number = int(args.dataType[-2:])
+    if bit_number == 32:
+      args.count*=2
+    elif bit_number == 64:
+      args.count*=4
+    elif bit_number == 16:
+      pass
+    else:
+      print("Unsupported Bitnumber in DataType!")
+      return False
 
+  except:
+    print("Error: Unsupported DataType!")
+    return False
   run(args)
 
 
@@ -141,21 +156,21 @@ def run(args):
 
   if args.functionCode == 1:
     result =  client.read_coils(args.address, count=args.count,unit = args.unit)
-    if isinstance(result,ModbusIOException):
+    if isinstance(result,modbus_exception_list):
         logger.exception(result)
         return False
     logger.info("Returned Values: {}".format(result.registers))
   
   elif args.functionCode == 3:
     result =  client.read_holding_registers(args.address, count=args.count,unit = args.unit)
-    if isinstance(result,ModbusIOException):
+    if isinstance(result,modbus_exception_list):
       logger.exception(result)
       return False
     logger.info("Returned Values: {}".format(result.registers))
   
   elif args.functionCode == 4:
     result =  client.read_input_registers(args.address, count=args.count,unit = args.unit)
-    if isinstance(result,ModbusIOException):
+    if isinstance(result,modbus_exception_list):
         logger.exception(result)
         return False
     logger.info("Returned Values: {}".format(result.registers))
@@ -173,14 +188,30 @@ def run(args):
     return False
 
   if args.functionCode in [3,4]:
-    if args.datatype == "int16":
-      decoder =  BinaryPayloadDecoder.fromRegisters(result.registers,byteorder=args.byteorder,wordorder=args.wordorder)
+    decoder =  BinaryPayloadDecoder.fromRegisters(result.registers,byteorder=args.byteorder,wordorder=args.wordorder)
+    if args.dataType == "int16":
       value = decoder.decode_16bit_int()
-    elif args.datatype == "float32":
-      decoder =  BinaryPayloadDecoder.fromRegisters(result.registers,byteorder=args.byteorder,wordorder=args.wordorder)
+    elif args.dataType == "int32":
+      value = decoder.decode_32bit_int()
+    elif args.dataType == "int64":
+      value = decoder.decode_64bit_int()
+
+    elif args.dataType == "uint16":
+      value = decoder.decode_16bit_uint()
+    elif args.dataType == "uint32":
+      value = decoder.decode_32bit_uint()
+    elif args.dataType == "uint64":
+      value = decoder.decode_64bit_uint()
+
+    elif args.dataType == "float32":
       value = decoder.decode_32bit_float()
+    elif args.dataType == "float16":
+      value = decoder.decode_16bit_float()
+    elif args.dataType == "float64":
+      value = decoder.decode_64bit_float()
     else:
       logger.warning("Datatype is not supported.")
+      return False
     logger.info("Parsed Value: {}".format(value))
 
     
