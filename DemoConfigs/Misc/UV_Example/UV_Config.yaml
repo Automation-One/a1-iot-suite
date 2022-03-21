@@ -1,0 +1,192 @@
+import: /home/root/AutomationOne/DemoConfigs/Misc/UV_Example/UV_Callback.py
+initCallback2: initialize
+
+variables:
+  pollRate: &pollRate 0.5
+  retries: &retries 2
+
+interfaces:
+  - name: &mod Modbus Interface
+    type: Modbus
+    port: /dev/ttymxc0
+    method: rtu
+    baudrate: 115200
+    parity: N
+
+nodes:
+  - name: UV1_ON
+    type: Modbus
+    interface: *mod
+    unit: 1
+    address: 1642
+    accessType: read
+    HoldingRegister: True
+    dataType: uint16
+    pollRate: *pollRate
+    sensitivity: 1
+    onChange: logValue
+    default: 0
+    retries: *retries
+
+  - name: UV2_ON
+    type: Modbus
+    interface: *mod
+    unit: 1
+    address: 1640
+    accessType: read
+    HoldingRegister: True
+    dataType: uint16
+    pollRate: *pollRate
+    sensitivity: 1
+    onChange: logValue
+    default: 0
+    retries: *retries
+
+  - name: PUSH_ON
+    type: Modbus
+    interface: *mod
+    unit: 1
+    address: 1644
+    accessType: read
+    HoldingRegister: True
+    dataType: uint16
+    pollRate: *pollRate
+    sensitivity: 1
+    onChange: logValue
+    default: 0
+    retries: *retries
+
+  - name: PUSH_OFF
+    type: Modbus
+    interface: *mod
+    unit: 1
+    address: 1645
+    accessType: read
+    HoldingRegister: True
+    dataType: uint16
+    pollRate: *pollRate
+    sensitivity: 1
+    onChange: logValue
+    default: 0
+    retries: *retries
+
+  - name: BREAK_UV1
+    type: Modbus
+    interface: *mod
+    unit: 2
+    address: 127
+    accessType: write
+    dataType: int16
+    onChange: logValue
+    sensitivity: 1 
+
+
+  - name: BREAK_UV2
+    type: Modbus
+    interface: *mod
+    unit: 3
+    address: 127
+    accessType: write
+    dataType: int16
+    onChange: logValue
+    sensitivity: 1 
+
+
+  - name: Web_Interface
+    type: Function
+    callback: web_interface
+    frequency: *pollRate
+    interfaceFile: "/cgiserver/data.json"
+
+
+  - name: Counter_UV1
+    default: 0
+    onChange: logValue
+    sensitivity: 1 
+
+  - name: Counter_UV2
+    default: 0
+    onChange: logValue
+    sensitivity: 1 
+
+  - name: Timer_UV1
+    default: 0.
+    
+  - name: Timer_UV2
+    default: 0.
+
+
+  - name: Web_Interface_Return
+    type: Function
+    callback: web_interface_return
+    frequency: *pollRate
+    interfaceFile: "/cgiserver/out.json"
+
+connections:
+  - name: Web_Interface_Connection
+    inNode: [PUSH_ON,Counter_UV1,Counter_UV2,Timer_UV1,Timer_UV2]
+    execute_on_change: [True,True,True,False,False]
+    outNode: Web_Interface
+    frequency: 5.0
+    as_dictionary: True
+
+
+  - name: Count_UV1
+    type: custom
+    inNode: [UV1_ON,PUSH_ON,Counter_UV1]
+    outNode: Counter_UV1
+    callback: impulse_count
+    args: ["UV1"]
+    execute_on_change: [True,True,False]
+    delay: .2
+
+
+  - name: Count_UV2
+    type: custom
+    inNode: [UV2_ON,PUSH_ON,Counter_UV2]
+    outNode: Counter_UV2
+    callback: impulse_count
+    args: ["UV2"]
+    execute_on_change: [True,True,False]
+    delay: .2
+
+  - name: Time_UV1
+    type: custom
+    inNode: [UV1_ON,Timer_UV1]
+    outNode: Timer_UV1
+    callback: time_measurement
+    args: ["UV1"]
+    frequency: 0.5
+    execute_on_change: [True,False]
+
+  - name: Time_UV2
+    type: custom
+    inNode: [UV2_ON,Timer_UV2]
+    outNode: Timer_UV2
+    callback: time_measurement
+    args: ["UV2"]
+    frequency: 0.5
+    execute_on_change: [True,False]
+
+
+  - name: Stop_UV1
+    type: custom
+    inNode: [UV1_ON,UV2_ON,PUSH_ON]
+    outNode: BREAK_UV1
+    callback: stop_UV
+    args: "UV1"
+    execute_on_change: [False,False,False]
+    frequency: 1.0
+
+  - name: Stop_UV2
+    type: custom
+    inNode: [UV2_ON,UV1_ON,PUSH_ON]
+    outNode: BREAK_UV2
+    callback: stop_UV
+    args: "UV2"
+    execute_on_change: [False,False,False]
+    frequency: 1.0
+
+
+  
+
