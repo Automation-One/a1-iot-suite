@@ -787,8 +787,11 @@ class Connection:
     self.handler = handler
     self.name = config.get("name")
 
+    
     self.frequency = config.get("frequency",False)
     self.on_change = config.get("execute_on_change", not self.frequency)
+    self.delay = config.get("delay", 0)
+
 
     self.doOnStartup = config.get("doOnStartup",False)
     
@@ -819,7 +822,10 @@ class Connection:
       timeloop._add_job(self.execute,timedelta(seconds=self.frequency)) 
 
   def execute(self):
-    logger.debug("Executing Connection {}".format(self.name))
+    if self.delay:
+      logger.debug(f"Delaying execution of connection {self.name} by {self.delay} seconds")
+      time.sleep(self.delay)
+    logger.debug("Executing connection {}".format(self.name))
 
   def register(self):
     if isinstance(self.inNode,list):
