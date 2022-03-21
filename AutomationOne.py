@@ -280,11 +280,11 @@ class Handler:
   def parseConnection(self,connectionConfig):
     connectionType = connectionConfig.get("type","simple")
     try:
-      if connectionType == "simple":
+      if connectionType.lower() == "simple":
         connection = SimpleConnection(self,connectionConfig)
-      elif connectionType == "conditional":
+      elif connectionType.lower() == "conditional":
         connection = ConditionalConnection(self,connectionConfig)
-      elif connectionType == "custom":
+      elif connectionType.lower() == "custom":
         connection = CustomConnection(self,connectionConfig)
       else:
         logger.error("The connection type was not recognized! (config = {})".format(connectionConfig))
