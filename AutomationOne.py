@@ -82,16 +82,16 @@ class Handler:
     
   def _initialize(self):
     if self.initCallback:
-      logger.debug("Calling initCallback {}".format(self.initCallbackName))
+      logger.info("Calling initCallback {}".format(self.initCallbackName))
       self.initCallback(self)
     for interface in self.interfaces.values():
-      logger.debug("Calling start() for interface {}.".format(interface.name))
+      logger.info("Calling start() for interface {}.".format(interface.name))
       interface.start()
     for node in self.nodes.values():
-      logger.debug("Calling start() for Node {}.".format(node.name))
+      logger.info("Calling start() for Node {}.".format(node.name))
       node.start()
     for connection in self.connections.values():
-      logger.debug("Calling start() for connection {}.".format(connection.name))
+      logger.info("Calling start() for connection {}.".format(connection.name))
       connection.start()
     self._start()
 
