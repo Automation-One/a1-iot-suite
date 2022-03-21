@@ -93,6 +93,9 @@ class Handler:
     for connection in self.connections.values():
       logger.info("Calling start() for connection {}.".format(connection.name))
       connection.start()
+    if self.initCallback2:
+      logger.info("Calling initCallback2 {}".format(self.initCallback2Name))
+      self.initCallback2(self)
     self._start()
 
   def _create_timeloop(self):
@@ -183,12 +186,18 @@ class Handler:
     logger.debug("Callback Modul: {}".format(self.callbackModule))
 
     self.initCallbackName = config.get("initCallback")
+    self.initCallback2Name = config.get("initCallback2") #Performed after all other initializations
     self.finalCallbackName = config.get("finalCallback")
 
     if self.initCallbackName:
       self.initCallback = getattr(self.callbackModule,self.initCallbackName)
     else:
       self.initCallback = None
+
+    if self.initCallback2Name:
+      self.initCallback2 = getattr(self.callbackModule,self.initCallback2Name)
+    else:
+      self.initCallback2 = None
 
     if self.finalCallbackName:
       self.finalCallback = getattr(self.callbackModule,self.finalCallbackName)
