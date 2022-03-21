@@ -787,15 +787,11 @@ class Connection:
     self.handler = handler
     self.name = config.get("name")
 
-    self.update = config.get("update",None)
     self.frequency = config.get("frequency",False)
+    self.on_change = config.get("execute_on_change", not self.frequency)
 
     self.doOnStartup = config.get("doOnStartup",False)
     
-    
-
-    self._onChange = (self.update != "none") and (not self.frequency) or  (self.update == "on change")
-
     self.inName = config.get("in")
     if not self.inName:
       self.inName = config.get("inNode")
@@ -805,6 +801,8 @@ class Connection:
 
     if isinstance(self.inName,list):
       self.inNode = [self.handler.nodes.get(name) for name in self.inName]
+      if not isinstance(self.on_change,list):
+        self.on_change = [self.on_change for _ in self.inName]
     else:
       self.inNode = self.handler.nodes.get(self.inName)
     if isinstance(self.outName,list):
@@ -824,11 +822,12 @@ class Connection:
     logger.debug("Executing Connection {}".format(self.name))
 
   def register(self):
-    if self._onChange:
-      if isinstance(self.inNode,list):
-        for node in self.inNode:
+    if isinstance(self.inNode,list):
+      for node,on_change in zip(self.inNode,self.on_change):
+        if on_change:
           node.registerOnChange(self)
-      else:
+    else:
+      if self.on_change:
         self.inNode.registerOnChange(self)
 
   def __str__(self):
