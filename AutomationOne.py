@@ -819,7 +819,7 @@ class Connection:
 
   def _init_timeloop(self,timeloop):
     if self.frequency:
-      timeloop._add_job(self.execute,timedelta(seconds=self.frequency)) 
+      timeloop._add_job(self.execute,timedelta(seconds=float(self.frequency))) 
 
   def execute(self):
     if self.delay:
