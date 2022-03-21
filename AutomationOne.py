@@ -803,13 +803,13 @@ class Connection:
       self.outName = config.get("outNode")
 
     if isinstance(self.inName,list):
-      self.inNode = [self.handler.nodes.get(name) for name in self.inName]
+      self.inNode = [self.handler.nodes[name] for name in self.inName]
       if not isinstance(self.on_change,list):
         self.on_change = [self.on_change for _ in self.inName]
     else:
       self.inNode = self.handler.nodes.get(self.inName)
     if isinstance(self.outName,list):
-      self.outNode = [self.handler.nodes.get(name) for name in self.outName]
+      self.outNode = [self.handler.nodes[name] for name in self.outName]
     else:
       self.outNode = self.handler.nodes.get(self.outName)
 
