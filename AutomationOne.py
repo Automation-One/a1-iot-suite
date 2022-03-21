@@ -655,17 +655,19 @@ class ModbusNode(Node):
 
   def pullValue(self):
     if self.read:
-      for _ in range(self.retries):
+      for i in range(self.retries):
         data = self.interface.read(self.address, self._count, self.unit,self.holding)
-        #logger.debug("[Node {}] received data: {}".format(self.name,data.registers))
-        if isinstance(data,ModbusIOException) or isinstance(data,ExceptionResponse):
-          logger.error("[Node {}] {}".format(self.name,data))
-          return self.value
+        #logger.debug("[Node {}] received data: {}".format(self.name,data))
         try:
           if len(data.registers)>0:
             break
         except:
           pass
+        if i+1 < self.retries:
+          logger.info(f"Retrying Modbus connection {self.name}")
+      if isinstance(data,ModbusIOException) or isinstance(data,ExceptionResponse):
+        logger.error("[Node {}] {}".format(self.name,data))
+        return self.value
       decoder =  BinaryPayloadDecoder.fromRegisters(data.registers,byteorder=self.byteorder,wordorder=self.wordorder)
 
       if self.dataType == "int16":
