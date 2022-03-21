@@ -42,11 +42,11 @@ def main():
   parser.add_argument('--functionCode', "-f",type=int,help="Functioncode for the modbus request (default = 3)")
   parser.add_argument('--count',"-c",type=int, help = "Count for the Modbus Request (default = 1)")
 
-  parser.add_argument("value", nargs ="?",type=str,help = "Value for functioncodes 5,6,15 and 16")
+  parser.add_argument("value", nargs ="?",type=str,help = "Value for functioncode 6")
 
   parser.add_argument('--verbose','-v', dest='verbose',action="store_true", help = "Verbose Output Including the returned register values")
 
-  parser.add_argument("--dataType","-F",type = str, default = "int16", help = "Dateiformat int, uint, float with 16, 32 or 64 bit (default = int16)")
+  parser.add_argument("--dataType","-F",type = str, default = "int16", help = "Data format for the read values: int, uint, float with 16, 32 or 64 bit (default = int16)")
   parser.add_argument("--wordorder",type = str, default = '<', help = "Default: <")
   parser.add_argument("--byteorder", type = str, default = '>', help = "Default: >")
 
