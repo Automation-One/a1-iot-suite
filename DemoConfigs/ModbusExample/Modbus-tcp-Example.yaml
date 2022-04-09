@@ -1,0 +1,23 @@
+import: /home/root/AutomationOne/DemoConfigs/ModbusExample/Callback.py
+
+
+interfaces:
+  - name: Modbus Interface
+    type: Modbus
+    method: tcp
+    host: 10.0.0.9
+    port: 502
+
+nodes:
+  - name: Field Value
+    type: Modbus
+    interface: Modbus Interface
+    unit: 1
+    address: 1000
+    accessType: read
+    HoldingRegister: True
+    dataType: int32i
+    pollRate: 5
+    sensitivity: 0 # log value / perform connections after every poll regardless if a change happend
+    onChange: logValue 
+    
