@@ -7,7 +7,7 @@ import logging
 import argparse
 import yaml
 
-from pymodbus.client.sync import ModbusSerialClient
+from pymodbus.client.sync import ModbusSerialClient, ModbusTcpClient
 from pymodbus.exceptions import ModbusIOException
 from pymodbus.pdu import ExceptionResponse
 from pymodbus.payload import BinaryPayloadDecoder
@@ -28,12 +28,21 @@ def main():
   
   parser.add_argument('--config', "-C", type = str, help = "Configuration File (yaml).")
 
-  parser.add_argument('--device', "-D", help="Device for sending the request. (Default: /dev/ttymxc2)")
+  parser.add_argument('--method','-M',type = str, help= "Specifies the method. Can be rtu (for Serial connections) or tcp (default: rtu)")
+
+  #TCP
+  parser.add_argument('--host','-H',type=str,help="Modbus Host (for tcp)")
+  parser.add_argument('--port','-p',type=int,help="Port for the tcp connection (default: 503)")
+
+  #RTU
+  parser.add_argument('--device', "-D", help="Serial device for sending the request. (Default: /dev/ttymxc2)")
   parser.add_argument('--baudrate', "-b", type = int, help = "Baudrate for the serial connection.")
   parser.add_argument('--parity', "-P",help = "Parity for the serial connection.")
   parser.add_argument('--stopbits', "-S", type=int, help="Stopbits for the serial connection. (default = 1)")
-  parser.add_argument('--timeout', "-T", help="Timeout for the serial connection in seconds. (default = 1)")
   parser.add_argument("--bytesize", "-B", type = int, help = "Bytesize for the serial connection. (default = 8)")
+
+  #Both
+  parser.add_argument('--timeout', "-T", help="Timeout for the serial connection in seconds. (default = 1)")
 
   
   
@@ -61,61 +70,91 @@ def main():
       with open(args.config, 'r') as stream:
         config = yaml.safe_load(stream)
       logger.debug("Reading Config from file {}: {}".format(args.config,config))
+
+      if args.method is None:
+        args.method = config.get('method')
+      if args.method is None:
+        args.method = "rtu"
       
-      if args.baudrate == None:
-        args.baudrate = config.get('baudrate')
 
-      if args.parity == None:
-        args.parity = config.get('parity')
-
-      if args.device == None:
-        args.device = config.get('device')
+      if args.method == "tcp":
+        if args.host is None:
+          args.host = config.get('host')
+        
+        if args.port is None:
+          args.port = config.get('port')
       
-      if args.stopbits == None:
-        args.stopbits = config.get('stopbits')
+      elif args.method == "rtu":
+        if args.baudrate is None:
+          args.baudrate = config.get('baudrate')
 
-      if args.timeout == None:
+        if args.parity is None:
+          args.parity = config.get('parity')
+
+        if args.device is None:
+          args.device = config.get('device')
+        
+        if args.stopbits is None:
+          args.stopbits = config.get('stopbits')
+
+        if args.bytesize is None:
+          args.bytesize = config.get("bytesize")
+        
+      if args.timeout is None:
         args.timeout = config.get('timeout')
 
-      if args.bytesize == None:
-        args.bytesize = config.get("bytesize")
-      
-      if args.unit == None:
+      if args.unit is None:
         args.unit = config.get("unit")
       
-      if args.address == None:
+      if args.address is None:
         args.address = config.get("address")
 
-      if args.functionCode == None:
+      if args.functionCode is None:
         args.functionCode = config.get("functionCode")
       
-      if args.count == None:
+      if args.count is None:
         args.count = config.get("count")
+
 
 
     except:
       logger.exception("An error occured while reading the Config File:")
       return False
-  
-  if not args.baudrate:
-    logger.error("The Baudrate must be specified either in the config file or using --baudrate")
-    return False
 
-  if not args.parity:
-    logger.error("Pairity must be specified either in the config file or  using --parity")
-    return False
+  if args.method is None:
+    args.method = 'rtu'
+    
+  if args.method == 'rtu':
+    if not args.baudrate:
+      logger.error("The Baudrate must be specified either in the config file or using --baudrate for rtu connections")
+      return False
 
-  if not args.device:
-    args.device = "/dev/ttymxc2"
+    if not args.parity:
+      logger.error("Pairity must be specified either in the config file or  using --parity for rtu connections")
+      return False
 
-  if not args.stopbits:
-    args.stopbits = 1
+    if not args.device:
+      args.device = "/dev/ttymxc2"
+
+    if not args.stopbits:
+      args.stopbits = 1
+
+    if not args.bytesize:
+      args.bytesize = 8
+
+  elif args.method == 'tcp':
+    if not args.host:
+      logger.error("The Host must be specified either in the config file or using --host for tcp connections")
+      return False
+
+    if not args.port:
+      args.port = 503
+  else:
+    logger.error("Method can only be 'rtu' or 'tcp'.")
+    return False 
 
   if not args.timeout:
     args.timeout = 1
-
-  if not args.bytesize:
-    args.bytesize = 8
 
   if not args.unit:
     args.unit = 1
@@ -160,9 +199,21 @@ def main():
 def run(args):
   logger.debug("Running Modbus Connect with: {}".format(args))
 
-  client = ModbusSerialClient( method="rtu",
-    baudrate=args.baudrate, port=args.device, parity=args.parity, stopbits=args.stopbits,
-    bytesize=args.bytesize, timeout=args.timeout)
+  if args.method == "rtu":
+    client = ModbusSerialClient( method="rtu",
+      baudrate=args.baudrate, port=args.device, parity=args.parity, stopbits=args.stopbits,
+      bytesize=args.bytesize, timeout=args.timeout)
+  elif args.method == "tcp":
+    client = ModbusTcpClient(host = args.host, port=args.port, timeout=args.timeout)
+  else:
+    raise(f"Method '{args.method}' is not implemented!")
+
+  if client.connect():
+    logger.debug("Connection Successfull")
+  else:
+    logger.error("Connection Failed")
+    return False
+  
 
   if args.functionCode == 1:
     result =  client.read_coils(args.address, count=args.count,unit = args.unit)
