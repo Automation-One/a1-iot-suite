@@ -54,12 +54,18 @@ def main():
   parser.add_argument("values", nargs ="*",type=str,help = "Value(s) for functioncode 6")
 
   parser.add_argument('--verbose','-v', dest='verbose',action="store_true", help = "Verbose Output Including the returned register values")
+  parser.add_argument('--version', dest='version',action="store_true", help = "Shows the version of this tool.")
 
   parser.add_argument("--dataType","-F",type = str, default = "int16", help = "Data format for the read values: int, uint, float with 16, 32 or 64 bit (default = int16)")
   parser.add_argument("--wordorder",type = str, default = '<', help = "Default: <")
   parser.add_argument("--byteorder", type = str, default = '>', help = "Default: >")
 
   args = parser.parse_args()
+
+  if args.version:
+    logger.info("Modbus.py version 1.2")
+    return 0
+
   if args.verbose:
     logger.setLevel(logging.DEBUG)
 
