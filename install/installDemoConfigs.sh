@@ -3,7 +3,7 @@
 
 [ -d ~/AutomationOne ] || mkdir ~/AutomationOne
 
-cp -r ../DemoConfigs ~/AutomationOne/DemoConfigs
+cp -vr ../DemoConfigs ~/AutomationOne/
 
-[ -f ~/AutomationOne/config.yaml ]  || ln -s ~/AutomationOne/DemoConfigs/DemoConfig.yaml ~/AutomationOne/config.yaml
+[ -e ~/AutomationOne/config.yaml ]  || ln -s ~/AutomationOne/DemoConfigs/DemoConfig.yaml ~/AutomationOne/config.yaml
 
