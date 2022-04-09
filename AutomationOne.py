@@ -372,10 +372,6 @@ class ModbusInterface(Interface):
       self.Failures+=1
     return result
 
-  def __str__(self):
-    return "ModbusInterface '{}' with method {}, baudrate {}, port {}, parity {}, stopbits{}, bytesize {}, timeout {}".format(self.name, self._method,
-      self._baudrate,self._port,self._parity,self._stopbits,self._bytesize,self._timeout)
-
 def ultralight2(interface, userdata,message):
   payload = message.payload
   array = payload.decode('UTF-8').split('|')
