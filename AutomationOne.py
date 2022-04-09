@@ -2,7 +2,7 @@
 from pymodbus.pdu import ExceptionResponse
 import yaml
 
-from pymodbus.client.sync import ModbusSerialClient
+from pymodbus.client.sync import ModbusSerialClient, ModbusTcpClient
 from pymodbus.payload import BinaryPayloadDecoder
 from pymodbus.payload import BinaryPayloadBuilder
 from pymodbus.exceptions import ModbusIOException
@@ -322,22 +322,41 @@ class Interface:
 class ModbusInterface(Interface):
   def __init__(self,handler,config = {}):
     super().__init__(handler,config)
-    self._method = config.get("method","rtu")
-    self._baudrate = config.get("baudrate")
-    self._port = config.get("port","/dev/ttymxc2")
-    self._parity = config.get("parity","E")
-    self._stopbits = config.get("stopbits",1)
-    self._bytesize = config.get("bytesize",8)
-    self._timeout = config.get("timeout",1)
+    self._method = config.get("method","rtu").lower()
+
+    self._timeout = float(config.get("timeout",1))
+
+    if self._method == "rtu":
+      self._baudrate = config.get("baudrate")
+      self._port = config.get("port","/dev/ttymxc2")
+      self._parity = config.get("parity","E")
+      self._stopbits = config.get("stopbits",1)
+      self._bytesize = config.get("bytesize",8)
+      
+      logger.debug(f"[{self.name}] Creating Modbus Serial-rtu Client with baudrate {self._baudrate}, device {self._port}, parity {self._parity}, stopbits {self._stopbits}, bytesize {self._bytesize} and timeout {self._timeout}")
+      self.client_modbus = ModbusSerialClient( method="rtu",
+        baudrate=self._baudrate, port=self._port, parity=self._parity, stopbits=self._stopbits,
+        bytesize=self._bytesize, timeout=self._timeout)
+    elif self._method == "tcp":
+      self._host = config.get("host")
+      self._port = config.get("port",502)
+      logger.debug(f"[{self.name}] Creating Modubs TCP Client with host {self._host}, port {self._port}, timeout {self._timeout}")
+      self.client_modbus = ModbusTcpClient(host=self._host,port=self._port,timeout=self._timeout)
+    else:
+      raise(f"[{self.name}] Modbus Interface for method '{self._method}' is not implemented!")
+    
+    if self.client_modbus.connect():
+      logger.debug(f"[{self.name}] Successfully connected.")
+    else:
+      logger.error(f"[{self.name}] Failed to connect!")
+      raise("Could not connect to modbus client")
 
     self.ReadRequests = 0
     self.Failures = 0
 
-    self.client_modbus = ModbusSerialClient( method=self._method,
-      baudrate=self._baudrate, port=self._port, parity=self._parity, stopbits=self._stopbits,
-      bytesize=self._bytesize, timeout=self._timeout)
-
-    #self.client_modbus.debug_enabled = True
+    self._debug_enabled = config.get("debug_enabled",False)
+    if self._debug_enabled:
+      self.client_modbus.debug_enabled = True
 
 
   def write(self, registers, address, unit):
