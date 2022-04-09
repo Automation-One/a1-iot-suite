@@ -10,7 +10,7 @@ import yaml
 from pymodbus.client.sync import ModbusSerialClient, ModbusTcpClient
 from pymodbus.exceptions import ModbusIOException
 from pymodbus.pdu import ExceptionResponse
-from pymodbus.payload import BinaryPayloadDecoder
+from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -42,7 +42,7 @@ def main():
   parser.add_argument("--bytesize", "-B", type = int, help = "Bytesize for the serial connection. (default = 8)")
 
   #Both
-  parser.add_argument('--timeout', "-T", help="Timeout for the serial connection in seconds. (default = 1)")
+  parser.add_argument('--timeout', "-T", type=float, help="Timeout for the serial connection in seconds. (default = 1)")
 
   
   
@@ -51,7 +51,7 @@ def main():
   parser.add_argument('--functionCode', "-f",type=int,help="Functioncode for the modbus request (default = 3)")
   parser.add_argument('--count',"-c",type=int, help = "Count for the Modbus Request (default = 1)")
 
-  parser.add_argument("value", nargs ="?",type=str,help = "Value for functioncode 6")
+  parser.add_argument("values", nargs ="*",type=str,help = "Value(s) for functioncode 6")
 
   parser.add_argument('--verbose','-v', dest='verbose',action="store_true", help = "Verbose Output Including the returned register values")
 
@@ -123,7 +123,7 @@ def main():
 
   if args.method is None:
     args.method = 'rtu'
-    
+
   if args.method == 'rtu':
     if not args.baudrate:
       logger.error("The Baudrate must be specified either in the config file or using --baudrate for rtu connections")
@@ -169,9 +169,9 @@ def main():
     args.count = 1
 
 
-  if args.functionCode == 6 and args.count != 1:
-    logger.error("Only one value can be written using function Code 6")
-    return False
+  if args.functionCode in [6,15] and args.count != 1:
+    logger.warning("For Function Codes 6 and 15, the count is induced by the number of Arguments given. => Ignoring Count")
+    args.count=1
 
   if args.count <1:
     logger.error("Count must be a positive integer!")
@@ -214,6 +214,33 @@ def run(args):
     logger.error("Connection Failed")
     return False
   
+  if args.functionCode in [6,15]:
+    builder = BinaryPayloadBuilder(byteorder=args.byteorder,wordorder=args.wordorder)
+    for value in args.values:
+      if args.dataType == "int16":
+        builder.add_16bit_int(int(value))
+      elif args.dataType == "int32":
+        builder.add_32bit_int(int(value))
+      elif args.dataType == "int64":
+        builder.add_64bit_int(int(value))
+
+      elif args.dataType == "uint16":
+        builder.add_16bit_uint(int(value))
+      elif args.dataType == "uint32":
+        builder.add_32bit_uint(int(value))
+      elif args.dataType == "uint64":
+        builder.add_64bit_uint(int(value))
+
+      elif args.dataType == "float32":
+        builder.add_32bit_float(float(value))
+      elif args.dataType == "float16":
+        builder.add_16bit_float(float(value))
+      elif args.dataType == "float64":
+        builder.add_64bit_float(float(value))
+      else:
+        logger.error("Datatype is not supported.")
+        return False
+
 
   if args.functionCode == 1:
     result =  client.read_coils(args.address, count=args.count,unit = args.unit)
@@ -240,12 +267,12 @@ def run(args):
       logger.info("Returned Values: {}".format(result.registers))
 
   elif args.functionCode == 6:
-    try:
-      value = int(args.value,0)
-    except:
-      logger.error("For FunctionCode 6, a Value is needed in either decimal (without Prefix), hex (with 0x Prefix) or binary (with 0b Prefix) notation.")
-      return False
-    client.write_registers(args.address, value, unit = args.unit)
+    if not client.write_registers(args.address, builder.to_registers(), unit = args.unit):
+      logger.error("Write Registers failed!")
+  elif args.functionCode == 15:
+    if not client.write_coils(args.address,builder.to_coils(),unit = args.unit):
+      logger.error("Write Coils failed!")
+    
 
   else:
     logging.error("Function Code not yet implemented!")
