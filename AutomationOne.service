@@ -1,0 +1,11 @@
+[Unit]
+Description=Automation One Suit
+After=network-online.target
+Requires=network-online.target
+
+[Service]
+ExecStart=/usr/bin/python3 /usr/bin/AutomationOne /home/root/AutomationOne/config.yaml
+WorkingDirectory=/home/root/AutomationOne
+
+[Install]
+WantedBy=multi-user.target
