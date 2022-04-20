@@ -76,7 +76,7 @@ def send_AT_code(AT_code):
 
 def get_GSM_Signal_Strength():
   """Get the GSM Signal Strength via AT code (AT+CSQ)"""
-  answer = send_AT_code("AT+CSQ")
+  answer = send_AT_code("+CSQ")
   if not answer:
     return None
   pattern = re.compile("\+CSQ: (\d+),(\d+)")

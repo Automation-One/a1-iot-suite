@@ -1,4 +1,4 @@
-import: /home/root/AutomationOne/DemoConfigs/Misc/SignalStrengthCallback.py
+import: /home/root/AutomationOne/DemoConfigs/Misc/SignalStrength/SignalStrengthCallback.py
 
 
 logging:
@@ -41,7 +41,7 @@ nodes:
     interface: *mqtt
     accessType: read
     mqttID: Frequenz
-    defaultValue: 0.2 # => 1 Periode in ungefähr einer halben Minute( alle 10*pi Sekunden )
+    default: 0.2 # => 1 Periode in ungefähr einer halben Minute( alle 10*pi Sekunden )
     onChange: logValue
 
   - name: Amplitude
@@ -49,7 +49,7 @@ nodes:
     interface: *mqtt
     accessType: read
     mqttID: Amplitude
-    defaultValue: 1.0
+    default: 1.0
     onChange: logValue
 
   - name: Phasenverschiebung
@@ -57,7 +57,7 @@ nodes:
     interface: *mqtt
     accessType: read
     mqttID: Phase
-    defaultValue: 0.0
+    default: 0.0
     onChange: logValue
 
   - name: Signalstärke
