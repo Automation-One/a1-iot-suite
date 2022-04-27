@@ -432,6 +432,8 @@ class MqttInterface(Interface):
     self.tls = config.get("tls")
 
     self.client = mqtt.Client(self.clientID)
+
+    self.qos = config.get("qos",0)
     
     if self.tls:
       self.client.tls_set(**self.tls)
@@ -512,14 +514,16 @@ class MqttInterface(Interface):
     node.setValue(value)
     return True
 
-  def publish(self,payload,topicPub=None):
+  def publish(self,payload,topicPub=None,qos=None):
     if not topicPub:
       topicPub = self.topicPub
+    if qos is None:
+      qos=self.qos
     if self.dryrun:
       logger.debug("[Dryrun] Publishing via Interface {} to topic {} with payload {}...".format(self.name, topicPub,payload))
       return 
     logger.debug("Publishing via Interface {} to topic {} with payload {}...".format(self.name, topicPub,payload))
-    self.client.publish(topicPub,payload)
+    self.client.publish(topicPub,payload,qos=qos)
 
 
 
