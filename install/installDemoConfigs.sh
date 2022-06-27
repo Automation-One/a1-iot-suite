@@ -1,9 +1,10 @@
 #!/bin/sh
 
+mkdir -p /data/AutomationOne
 
-[ -d ~/AutomationOne ] || mkdir ~/AutomationOne
+[ -e ~/AutomationOne ] || ln -s /data/AutomationOne ~/AutomationOne
 
-cp -vr ../DemoConfigs ~/AutomationOne/
+cp -vr ../DemoConfigs /data/AutomationOne/
 
-[ -e ~/AutomationOne/config.yaml ]  || ln -s ~/AutomationOne/DemoConfigs/DemoConfig.yaml ~/AutomationOne/config.yaml
+[ -e /data/AutomationOne/config.yaml ]  || ln -s /data/AutomationOne/DemoConfigs/DemoConfig.yaml /data/AutomationOne/config.yaml
 
