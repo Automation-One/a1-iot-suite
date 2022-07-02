@@ -21,7 +21,7 @@ import sys
 
 import os
 
-
+from mbus.MBus import MBus
 
 
 logger = logging.getLogger("AutomationOne")
@@ -522,9 +522,52 @@ class MqttInterface(Interface):
     self.client.publish(topicPub,payload)
 
 
+class MBusInterface(Interface):
+  def __init__(self,handler,config = {}):
+    super().__init__(handler,config)
 
+    self.device = config.get("device",None)
+    self.host = config.get("host",None)
+    self.port = config.get("port",None)
+    self._lock = False
 
+    if self.device:
+      self.mbus = MBus(device=self.device)
+    else:
+      self.mbus = MBus(host=self.host,port=self.port)
+    
+    
+    self.mbus.connect()
+    logger.info(f"Successfully connected to Mbus {self.name}")
 
+  def __del__(self):
+    try:
+      self.mbus.disconnect()
+      logger.info(f"Successfully disconnected from Mbus {self.name}")
+    except:
+      logger.warning("Could not properly disconnect M-Bus!")
+
+  def write(self, address):
+    logger.warning("M-Bus write is not yet implemented!")
+
+  def read(self, address):
+    while self._lock:
+      time.sleep(0.05)
+    self._lock=True
+    reply_data=None
+    result = None
+    try:
+      self.mbus.send_request_frame(address)
+      reply = self.mbus.recv_frame()
+      reply_data = self.mbus.frame_data_parse(reply)
+      result = self.mbus.frame_data_xml(reply_data)
+
+    except:
+      logger.error(f"Error during read from M-Bus {self.name} with address {self.address}")
+    if reply_data:
+      self.mbus.frame_data_free(reply_data)
+    self._lock=False
+    return result
 
 
 
