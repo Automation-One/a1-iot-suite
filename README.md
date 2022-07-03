@@ -1,12 +1,7 @@
 # a1-iot-suite
 
 ## Overview
-The a1-iot-suite is an easily configurable but very flexible data handler. It's main use-case is to collect, process, translates and distribute data between different Interfaces/Protocolls like M-Bus, modbus, and MQTT. It was originally intended as a companion programm for the industrial gateways offered by AutomationOne. However the core of this software is in no way limited to specific hardware or software, and can be used on any python-capable product with minimal alterations necessary. 
-
-
-### Disclaimer
-This SOFTWARE PRODUCT is provided by THE PROVIDER "as is" and "with all faults." THE PROVIDER makes no representations or warranties of any kind concerning the safety, suitability, lack of viruses, inaccuracies, typographical errors, or other harmful components of this SOFTWARE PRODUCT. There are inherent dangers in the use of any software, and you are solely responsible for determining whether this SOFTWARE PRODUCT is compatible with your equipment and other software installed on your equipment. You are also solely responsible for the protection of your equipment and backup of your data, and THE PROVIDER will not be liable for any damages you may suffer in connection with using, modifying, or distributing this SOFTWARE PRODUCT.
-
+The a1-iot-suite is an easily configurable but very flexible data handler. It's main use-case is to collect, process, translates and distribute data between different Interfaces/Protocolls like M-Bus, modbus, and MQTT. It was originally intended as a companion programm for the industrial gateways offered by AutomationOne. However the core of this software is in no way limited to specific hardware or software, and can be used on any python-capable product with minimal alterations necessary.
 
 
 ### What the a1-iot-suite is:
