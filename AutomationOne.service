@@ -4,8 +4,8 @@ After=network-online.target
 Requires=network-online.target
 
 [Service]
-ExecStart=/usr/bin/python3 /usr/bin/AutomationOne /home/root/AutomationOne/config.yaml
-WorkingDirectory=/home/root/AutomationOne
+ExecStart=/usr/bin/python3 /usr/bin/AutomationOne /data/AutomationOne/config.yaml
+WorkingDirectory=/data/AutomationOne/
 
 [Install]
 WantedBy=multi-user.target

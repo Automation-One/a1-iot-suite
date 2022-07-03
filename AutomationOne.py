@@ -21,8 +21,8 @@ import sys
 
 import os
 
-
-
+from mbus.MBus import MBus
+import xmltodict
 
 logger = logging.getLogger("AutomationOne")
 logger.setLevel(logging.DEBUG)
@@ -231,6 +231,8 @@ class Handler:
         interface = ModbusInterface(self,interfaceConfig)
       elif interfaceType == "MQTT":
         interface = MqttInterface(self,interfaceConfig)
+      elif interfaceType == "MBus":
+        interface = MBusInterface(self,interfaceConfig)
       else:
         logger.error("The interface type was not recognized! (config = {})".format(interfaceConfig))
         return False
@@ -257,6 +259,8 @@ class Handler:
         node = FunctionNode(self,nodeConfig)
       elif nodeType == "MQTT":
         node = MqttNode(self,nodeConfig)
+      elif nodeType == "MBus":
+        node = MBusNode(self,nodeConfig)
       elif nodeType == "default":
         node = Node(self,nodeConfig)
       else:
@@ -522,9 +526,52 @@ class MqttInterface(Interface):
     self.client.publish(topicPub,payload)
 
 
+class MBusInterface(Interface):
+  def __init__(self,handler,config = {}):
+    super().__init__(handler,config)
 
+    self.device = config.get("device",None)
+    self.host = config.get("host",None)
+    self.port = config.get("port",None)
+    self._lock = False
 
+    if self.device:
+      self.mbus = MBus(device=self.device)
+    else:
+      self.mbus = MBus(host=self.host,port=self.port)
+    
+    
+    self.mbus.connect()
+    logger.info(f"Successfully connected to Mbus {self.name}")
 
+  def __del__(self):
+    try:
+      self.mbus.disconnect()
+      logger.info(f"Successfully disconnected from Mbus {self.name}")
+    except:
+      logger.warning("Could not properly disconnect M-Bus!")
+
+  def write(self, address):
+    logger.warning("M-Bus write is not yet implemented!")
+
+  def read(self, address):
+    while self._lock:
+      time.sleep(0.05)
+    self._lock=True
+    reply_data=None
+    result = None
+    try:
+      self.mbus.send_request_frame(address)
+      reply = self.mbus.recv_frame()
+      reply_data = self.mbus.frame_data_parse(reply)
+      result = self.mbus.frame_data_xml(reply_data)
+
+    except:
+      logger.error(f"Error during read from M-Bus {self.name} with address {self.address}")
+    if reply_data:
+      self.mbus.frame_data_free(reply_data)
+    self._lock=False
+    return result
 
 
 
@@ -793,6 +840,80 @@ class MqttNode(Node):
     else:
       self.interface.encoder(self.mqttID,value,self.topicPub)
     super().setValue(value)
+
+
+def getPathFromDir(dir,path,nodeName = "<not given>"):
+  keys = str(path).split('/')
+  try:
+    for key in keys:
+      if isinstance(dir,list):
+        key = int(key)
+      dir = dir[key]
+    return dir
+  except:
+    logger.error(f"Could not find path {path} in answer dict for node '{nodeName}'")
+  return None
+
+
+
+class MBusNode(Node):
+  def __init__(self, handler, config):
+    super().__init__(handler,config)
+    self.interfaceName = config.get("interface")
+    self.interface = self.handler.interfaces[self.interfaceName]
+    self.address = config.get("address")
+
+    self.doOnStartup = config.get("doOnStartup", True)
+
+    self.pollRate = config.get("pollRate",None)
+
+    self.fields = config.get("fields",None)
+
+  def start(self):
+    if self.doOnStartup:
+      self.pullValue()
+
+  def pullValue(self):
+    data = self.interface.read(self.address)
+    if not self.fields and data is not None:
+      return data
+    try:
+      data_dict = xmltodict.parse(data)["MBusData"]
+    except:
+      logger.error(f"Could not parse data from MBus node {self.name}")
+      raise("Value error")
+    
+    if isinstance(self.fields,list):
+      value =  [getPathFromDir(data_dict,path,self.name) for path in self.fields]
+    elif isinstance(self.fields,dict):
+      value =  {key:getPathFromDir(data_dict,path,self.name) for (key,path) in self.fields.items()}
+    else:
+      value =  getPathFromDir(data_dict,self.fields,self.name)
+    self.setValue(value)
+    return value
+
+  def _init_timeloop(self, timeloop):
+    super()._init_timeloop(timeloop)
+    if self.pollRate:
+      timeloop._add_job(self.pullValue,timedelta(seconds=self.pollRate))
+      logger.debug("Added {} to Timeloop.".format(self.name))
+
+  def pushValue(self):
+    logger.warning("Push not implemented for MBus.")
+
+  def setValue(self,value):
+    super().setValue(value)
+
+
+
+
+
+
+
+
+
+
+
 
 
 

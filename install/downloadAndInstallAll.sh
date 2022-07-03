@@ -18,7 +18,9 @@ install_path="$tmpdir/a1-iot-suite-$branch/install/"
 
 cd $install_path
 /bin/sh installModbus.sh
+cd $install_path
 /bin/sh installAutomationOne.sh
+cd $install_path
 /bin/sh installDemoConfigs.sh
 
 cd /

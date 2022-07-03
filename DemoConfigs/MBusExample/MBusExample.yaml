@@ -1,0 +1,27 @@
+import: /home/root/AutomationOne/DemoConfigs/MBusExample/Callback.py
+
+
+interfaces:
+  - name: &mbus M-Bus Interface
+    type: MBus
+    device: /dev/ttymxc2
+
+nodes:
+  - name: M-Bus Device 1 - Manufacturer
+    type: MBus
+    interface: *mbus
+    address: 1
+    fields: SlaveInformation/Manufacturer
+
+    doOnStartup: true
+    onChange: logValue 
+
+
+  - name: M-Bus Device 1 - DataRecord 1 - Timestamp
+    type: MBus
+    interface: *mbus
+    address: 1
+    fields: DataRecord/1/Timestamp
+
+    pollRate: 5
+    onChange: logValue 
