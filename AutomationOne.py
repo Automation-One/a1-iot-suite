@@ -231,6 +231,8 @@ class Handler:
         interface = ModbusInterface(self,interfaceConfig)
       elif interfaceType == "MQTT":
         interface = MqttInterface(self,interfaceConfig)
+      elif interfaceType == "MBus":
+        interface = MBusInterface(self,interfaceConfig)
       else:
         logger.error("The interface type was not recognized! (config = {})".format(interfaceConfig))
         return False
@@ -257,6 +259,8 @@ class Handler:
         node = FunctionNode(self,nodeConfig)
       elif nodeType == "MQTT":
         node = MqttNode(self,nodeConfig)
+      elif nodeType == "MBus":
+        node = MBusNode(self,nodeConfig)
       elif nodeType == "default":
         node = Node(self,nodeConfig)
       else:
