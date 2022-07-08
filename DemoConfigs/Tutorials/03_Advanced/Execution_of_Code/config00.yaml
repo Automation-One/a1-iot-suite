@@ -1,0 +1,47 @@
+# This tutorial gives a more in depth explanation for different ways of executing custom code and when to use wich.
+#
+#
+# 
+# Parts of this tutorial:
+#     config00.yaml => Basic Setup / Using a Function-Node
+#     config01.yaml => using the onChange Node Parameter
+#     config02.yaml => using a connection onChange
+#     config03.yaml => using a connection with static timings
+#
+#
+################################# Basic Setup / Using a Function-Node #################################
+# 
+# 
+# 
+# The purpose of a Function-Node is to provide a way of getting data from or sending data to other sources.
+# Therefore it can be used to
+#    - generate any kind of data
+#    - implement your own node-types
+#    - provides a way to get values into or out of the a1-suite
+#
+# It's not usefull for
+#    - Changing Data ( => See Connections )
+#    - Reacting to Data ( => onChange )
+# 
+#
+#
+# In this example, we will use a Function Node to generate a time-dependent sine signal
+# of the form f(t) = a*sin(b*t+c).
+
+import: /home/root/AutomationOne/DemoConfigs/Tutorials/03_Advanced/Execution_of_Code/callback.py
+
+nodes:
+  - name: Sine Generator
+    type: Function 
+    frequency: 2       # update the signal every two seconds
+    callback: sign     # The function called "sign" is called every <frequency> second(s)
+
+    # Now we also give some optional parameters with which we can configure the signal
+    # without touching the callback.py.
+
+    sine:              # Structureing the arguments is optional encapsulates the data better.
+      a: 1             # Sine-Amplitude
+      b: 0.1           # Sine-Frequency
+      c: 0             # Sine-Phaseshift
+    log_value: true   # log the results (so that we can see something...)
+
