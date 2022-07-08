@@ -1,0 +1,59 @@
+# This tutorial gives a more in depth explanation for different ways of executing custom code and when to use wich.
+#
+#
+# 
+# Parts of this tutorial:
+#     config00.yaml => Basic Setup / Using a Function-Node
+#     config01.yaml => using the onChange Node Parameter
+#     config02.yaml => using a connection onChange
+#     config03.yaml => using a connection with static timings
+#
+#
+################################# using the onChange Node Parameter #################################
+# 
+# 
+# 
+# The purpose of the onChange Node Parameter is to provide a way of doing something only if the value has changed.
+# The utility of this command comes from the fact that "onChange" is so flexible and is available for all Nodes.
+# When the sensitivity is 0, an onchange event signals that a new value has been polled 
+# (either actively, or even more usefull passively)
+# In case of a sensitivity higher then 0, the onChange is only triggered when the value has changed by at least
+# this much since the last time an onChange event triggered. This can for example be used for some kind of 
+# "debouncing" or sending only relevant data
+#
+#
+# The onChange Node Parameter is especially usefull for
+#    - logging data
+#    - doing Stuff with Data
+#    - provides a way to get values into or out of the a1-suite
+#
+# It's not usefull for
+#    - Creating Data ( => See Function-Node )
+#    - Changing Data ( => See Connections )
+#
+# 
+#
+#
+# In this example, we will expand the previous example by displaying a short statement, whenever the value 
+# changed by more then 0.2 since the last statement. We do this, by first adding the sensitivity parameter to
+# the "Sign Generator" Node. Note, that the default-sensitivity is 0, and therefore any change would trigger 
+# an onChange event.
+# Thereafter we only have to register the correct onChange callback to the Node
+
+import: /home/root/AutomationOne/DemoConfigs/Tutorials/03_Advanced/Execution_of_Code/callback.py
+
+nodes:
+  - name: Sine Generator
+    type: Function 
+    frequency: 2       
+    callback: sign
+
+    sine:              
+      a: 1             
+      b: 0.1           
+      c: 0             
+    log_value: true
+
+    sensitivity: 0.2               # Only execute an onChange event when the value is changed by at least 0.2
+    onChange: display_on_change    # Call this function when an onChange event occurs
+

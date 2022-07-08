@@ -36,3 +36,13 @@ def sign(node):
   # any necessary onchange events (like connections or additional callbacks...)
 
   node.setValue(res)
+
+
+
+# Functions for config01.yaml
+
+def display_on_change(node):
+  """Callback function for displaying that an onChange event has occured."""
+  logger.info(f"An onchange event has occured for Node '{node.name}'")
+
+
