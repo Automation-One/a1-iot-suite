@@ -46,3 +46,7 @@ def display_on_change(node):
   logger.info(f"An onchange event has occured for Node '{node.name}'")
 
 
+# Functions for config02.yaml
+
+def log_value(node):
+  logger.info("[{}] {}".format(node.name,node.getValue()))
