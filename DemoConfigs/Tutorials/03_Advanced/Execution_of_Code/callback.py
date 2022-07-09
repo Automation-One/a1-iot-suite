@@ -50,3 +50,16 @@ def display_on_change(node):
 
 def log_value(node):
   logger.info("[{}] {}".format(node.name,node.getValue()))
+
+
+
+# Functions for config03.yaml
+
+def integrate(value,initial_value=0):
+  if integrate.res is None:
+    integrate.res = initial_value # set initial value on first call
+  integrate.res += value          # Add new value to old integrated value
+  return integrate.res            # Return new integrated value
+integrate.res = None              # Set variable coresponding to function
+
+
