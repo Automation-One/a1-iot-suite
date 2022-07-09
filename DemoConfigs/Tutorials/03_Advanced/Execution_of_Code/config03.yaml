@@ -1,0 +1,73 @@
+# This tutorial gives a more in depth explanation for different ways of executing custom code and when to use wich.
+#
+#
+# 
+# Parts of this tutorial:
+#     config00.yaml => Basic Setup / Using a Function-Node
+#     config01.yaml => using the onChange Node Parameter
+#     config02.yaml => using a connection onChange
+#     config03.yaml => using a connection with static timings
+#
+#
+################################# using a connection with static timings #################################
+# 
+# 
+# 
+# The purpose of a connection with static timings is to automatically forward data at a given intervall.
+#
+#
+# Connections with static timings are especially usefull for
+#    - mathematical operations depending on older data like integration and differentation, or 
+#      mean/median calculation
+#    - sending a regular 'heartbeat'
+#    - adjusting devices prone to moving slightly on their own
+#
+# It's not usefull for
+#    - reducing data flow 
+#    - reacting to data
+#
+# 
+#
+#
+# This example is very similar to the previous one, however this time, we will ignore the sensitivity and just 
+# pull a value from the Sine Generator every 5 seconds (notice that it does not need to match up with the
+# frequency of the inNode) Furthermore we will use a custom connection this time, which will add up all values
+# it receives.
+#
+# Note: static timings and onChange connections *can* be used together to achive various effects. 
+
+import: /home/root/AutomationOne/DemoConfigs/Tutorials/03_Advanced/Execution_of_Code/callback.py
+
+nodes:
+  - name: Sine Generator
+    type: Function 
+    frequency: 2       
+    callback: sign
+
+    sine:              
+      a: 1             
+      b: 0.1           
+      c: 0             
+    log_value: true
+
+    sensitivity: 0.2               # Only execute an onChange event when the value is changed by at least 0.2
+    
+
+  - name: Output Node              # Note that there is no sensitivity specivied for this node. Therefore 
+    onChange: log_value            # it uses the default 0, which means every set-value call will result in the
+                                   # the call of log_value
+
+connections:
+  - name: Connection 1
+    type: custom
+    inNode: Sine Generator
+    outNode: Output Node
+    frequency: 5                   # Call the callback every 5 seconds
+    execute_on_change: False       # this is default when a frequency is given
+
+    callback: integrate            # Call this connection
+    kwargs:                        # Give Additional Key-word arguments for the function
+      initial_value: 10             # set the initial Value for the Integration to 0
+   
+
+
