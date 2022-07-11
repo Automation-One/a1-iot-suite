@@ -355,6 +355,12 @@ class ModbusInterface(Interface):
       logger.error(f"[{self.name}] Failed to connect!")
       raise("Could not connect to modbus client")
 
+    self.force_delay = config.get("force_delay",None)
+    self.force_delay_per_unit = config.get("force_delay_per_unit",None)
+    self.lock = 0
+    self.unit_lock = {}
+    self.sleep_time = config.get("sleep_time",0.01)
+
     self.ReadRequests = 0
     self.Failures = 0
 
@@ -363,10 +369,20 @@ class ModbusInterface(Interface):
       self.client_modbus.debug_enabled = True
 
 
-  def write(self, registers, address, unit):
+  def check_lock(self,unit):
+    while self.lock>time.time() or self.unit_lock.get(unit,0)>time.time():
+      time.sleep(self.sleep_time)
+    if self.force_delay:
+      self.lock = time.time() + self.force_delay
+    if self.force_delay_per_unit:
+      self.unit_lock[unit] = time.time() + self.force_delay_per_unit
+
+  def write(self, registers, address, unit = None):
+    self.check_lock(unit)
     self.client_modbus.write_registers(address, registers, unit = unit)
 
   def read(self, address, count, unit,holding = False):
+    self.check_lock(unit)
     if holding:
       result =  self.client_modbus.read_holding_registers(address = address, count = count, unit = unit)
     else:
