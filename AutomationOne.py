@@ -877,7 +877,7 @@ class MBusNode(Node):
     super().__init__(handler,config)
     self.interfaceName = config.get("interface")
     self.interface = self.handler.interfaces[self.interfaceName]
-    self.address = config.get("address")
+    self.unit = config.get("unit")
 
     self.doOnStartup = config.get("doOnStartup", True)
 
@@ -890,7 +890,7 @@ class MBusNode(Node):
       self.pullValue()
 
   def pullValue(self):
-    data = self.interface.read(self.address)
+    data = self.interface.read(self.unit)
     if not self.fields and data is not None:
       return data
     try:
