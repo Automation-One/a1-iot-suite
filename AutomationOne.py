@@ -567,23 +567,23 @@ class MBusInterface(Interface):
     except:
       logger.warning("Could not properly disconnect M-Bus!")
 
-  def write(self, address):
+  def write(self, unit):
     logger.warning("M-Bus write is not yet implemented!")
 
-  def read(self, address):
+  def read(self, unit):
     while self._lock:
       time.sleep(0.05)
     self._lock=True
     reply_data=None
     result = None
     try:
-      self.mbus.send_request_frame(address)
+      self.mbus.send_request_frame(unit)
       reply = self.mbus.recv_frame()
       reply_data = self.mbus.frame_data_parse(reply)
       result = self.mbus.frame_data_xml(reply_data)
 
     except:
-      logger.error(f"Error during read from M-Bus {self.name} with address {self.address}")
+      logger.error(f"Error during read from M-Bus {self.name} with address {unit}")
     if reply_data:
       self.mbus.frame_data_free(reply_data)
     self._lock=False
