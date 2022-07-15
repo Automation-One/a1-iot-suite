@@ -82,20 +82,35 @@ class Handler:
     
   def _initialize(self):
     if self.initCallback:
-      logger.info("Calling initCallback {}".format(self.initCallbackName))
-      self.initCallback(self)
+      try:
+        logger.info("Calling initCallback {}".format(self.initCallbackName))
+        self.initCallback(self)
+      except:
+        logger.exception("Exception during initCallback!")
     for interface in self.interfaces.values():
-      logger.info("Calling start() for interface {}.".format(interface.name))
-      interface.start()
+      try:
+        logger.info("Calling start() for interface {}.".format(interface.name))
+        interface.start()
+      except:
+        logger.exception("Exception during start() of interface.")
     for node in self.nodes.values():
-      logger.info("Calling start() for Node {}.".format(node.name))
-      node.start()
+      try:
+        logger.info("Calling start() for Node {}.".format(node.name))
+        node.start()
+      except:
+        logger.exception("Exception during start() of Node.")
     for connection in self.connections.values():
-      logger.info("Calling start() for connection {}.".format(connection.name))
-      connection.start()
+      try:
+        logger.info("Calling start() for connection {}.".format(connection.name))
+        connection.start()
+      except:
+        logger.exception("Exception during start() for connection")
     if self.initCallback2:
-      logger.info("Calling initCallback2 {}".format(self.initCallback2Name))
-      self.initCallback2(self)
+      try:
+        logger.info("Calling initCallback2 {}".format(self.initCallback2Name))
+        self.initCallback2(self)
+      except:
+        logger.exception("Exception during initCallback2!")
     self._start()
 
   def _create_timeloop(self):
