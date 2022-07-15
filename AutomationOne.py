@@ -912,7 +912,7 @@ class MBusNode(Node):
       data_dict = xmltodict.parse(data)["MBusData"]
     except:
       logger.error(f"Could not parse data from MBus node {self.name}")
-      raise("Value error")
+      return self.value
     
     if isinstance(self.fields,list):
       value =  [getPathFromDir(data_dict,path,self.name) for path in self.fields]
