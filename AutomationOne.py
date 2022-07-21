@@ -484,6 +484,7 @@ class MqttInterface(Interface):
 
     self.client.on_message = lambda client, userdata, message: self.on_message(client, userdata, message)
     self.client.on_connect = lambda  client, userdata, flags, rc: self.on_connect(client, userdata, flags, rc)
+    self.client.on_disconnect = lambda client, userdata, rc: self.on_disconnect(client, userdata, rc)
 
     if config.get("blocking",False ):
       self.client.connect(self.host,self.port,self.keepalive)
@@ -521,6 +522,12 @@ class MqttInterface(Interface):
     else:
       logger.error("MQTT interface {} connection failed with return code {}".format(self.name,rc))
     
+  def on_disconnect(self, client, userdate, rc):
+    if rc==0:
+      logger.info(f"MQTT interface {self.name} disconnected successfully.")
+    else:
+      logger.error(f"MQTT interface {self.name} disconnected unexpectedly with return code {rc}")
+
   def start(self):
     super().start()
     self.client.loop_start()
