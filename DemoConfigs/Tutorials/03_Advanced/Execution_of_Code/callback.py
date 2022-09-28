@@ -10,8 +10,8 @@ logger = logging.getLogger("AutomationOne")
 
 # Functions for config00.yaml
 
-def sign(node):
-  """Callback function for creating a sign-like signal"""
+def sine(node):
+  """Callback function for creating a sine-like signal of the form a*sin(b*t+c)"""
   # First we load the custom configuration for this node
   # Notice that we also give default values for these parameters.
 

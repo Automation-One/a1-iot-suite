@@ -34,7 +34,7 @@ nodes:
   - name: Sine Generator
     type: Function 
     frequency: 2       # update the signal every two seconds
-    callback: sign     # The function called "sign" is called every <frequency> second(s)
+    callback: sine     # The function called "sine" is called every <frequency> second(s)
 
     # Now we also give some optional parameters with which we can configure the signal
     # without touching the callback.py.

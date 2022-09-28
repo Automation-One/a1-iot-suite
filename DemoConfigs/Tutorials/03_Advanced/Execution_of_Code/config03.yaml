@@ -42,7 +42,7 @@ nodes:
   - name: Sine Generator
     type: Function 
     frequency: 2       
-    callback: sign
+    callback: sine
 
     sine:              
       a: 1             
