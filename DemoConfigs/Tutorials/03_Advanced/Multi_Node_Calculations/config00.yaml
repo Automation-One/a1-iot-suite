@@ -1,0 +1,50 @@
+# This tutorial gives a more in depth explanation on how to calculate using multiple node-values
+#
+#
+# Parts of this tutorial:
+#     config00.yaml => How to add multiple Nodes using a custom function
+#
+######################### How to add multiple Nodes using a custom function ###############################
+#
+#
+#
+# The basic idea is to use a connection to collect the data from multiple nodes, and then call a custom function, which will add them together
+#
+# In this example, we will bias a sign-curve with a value from a second Node. For this, we will first define a node, which will always generate
+# a specific value. Secondly, we will define another custom node, which will generate the sign curve. An another Node to hold the value of the 
+# result.
+# 
+# Then we will create a custom connection, which takes the values from both nodes and passes them to a callback function, which will add them up
+# and passes them back to the connection, which will finally pass it to the outNode.
+# 
+
+import: /home/root/AutomationOne/DemoConfigs/Tutorials/03_Advanced/Multi_Node_Calculations/callback.py
+
+nodes:
+  - name: Constant
+    default: 5
+
+  - name: Sine Generator
+    type: Function 
+    frequency: 0.5       
+    callback: sine
+
+    sine:                 # parameters for the sine callback a*sin(b*t+c)
+      a: 1                
+      b: 0.1              
+      c: 0
+
+    onChange: log_value   # Call this function when an onChange event occurs
+
+  - name: Result
+    onChange: log_value   # Log the value, when the value is updated.
+
+connections:
+  - name: Bias
+    type: custom
+    callback: add_Nodes
+    inNode:
+      - "Constant"
+      - "Sine Generator"
+    outNode: Result
+  
