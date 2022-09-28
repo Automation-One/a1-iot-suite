@@ -18,7 +18,7 @@
 # and passes them back to the connection, which will finally pass it to the outNode.
 # 
 
-import: /home/root/AutomationOne/DemoConfigs/Tutorials/03_Advanced/Multi_Node_Calculations/callback.py
+import: callback.py
 
 nodes:
   - name: Constant

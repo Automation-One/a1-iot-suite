@@ -40,7 +40,7 @@
 # an onChange event.
 # Thereafter we only have to register the correct onChange callback to the Node
 
-import: /home/root/AutomationOne/DemoConfigs/Tutorials/03_Advanced/Execution_of_Code/callback.py
+import: callback.py
 
 nodes:
   - name: Sine Generator

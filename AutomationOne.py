@@ -20,6 +20,7 @@ from datetime import timedelta
 import sys
 
 import os
+from pathlib import Path
 
 from mbus.MBus import MBus
 import xmltodict
@@ -187,10 +188,12 @@ class Handler:
       time.tzset()
     
     if "import" in config:
+      import_path = config["import"]
+      if import_path[0] != "/":  
+        import_path = Path(file).resolve().parent / import_path
+      logger.info("Importing Callback file {}".format(import_path))
 
-      logger.info("Importing Callback file {}".format(config["import"]))
-
-      spec = importlib.util.spec_from_file_location("Callback",config["import"])
+      spec = importlib.util.spec_from_file_location("Callback",import_path)
       module = importlib.util.module_from_spec(spec)
       spec.loader.exec_module(module)
       self.callbackModule = module
