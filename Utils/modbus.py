@@ -48,7 +48,7 @@ def main():
   
   parser.add_argument("--unit","-u", type = int, help = "Modbus unit (default = 1)")
   parser.add_argument("--address", "-a", type = int, help = "Modbus Address (default = 0)")
-  parser.add_argument('--functionCode', "-f",type=int,help="Functioncode for the modbus request (default = 3)")
+  parser.add_argument('--functionCode', "-f",type=int,help="Functioncode for the modbus request (default = 3, supported: 1,3,4,6,15,16)")
   parser.add_argument('--count',"-c",type=int, help = "Count for the Modbus Request (default = 1)")
 
   parser.add_argument("values", nargs ="*",type=str,help = "Value(s) for functioncode 6")
@@ -220,7 +220,7 @@ def run(args):
     logger.error("Connection Failed")
     return False
   
-  if args.functionCode in [6,15]:
+  if args.functionCode in [6,15,16]:
     builder = BinaryPayloadBuilder(byteorder=args.byteorder,wordorder=args.wordorder)
     for value in args.values:
       if args.dataType == "int16":
@@ -273,6 +273,12 @@ def run(args):
       logger.info("Returned Values: {}".format(result.registers))
 
   elif args.functionCode == 6:
+    if args.count > 1:
+      logger.error("FunctionCode 6 only supports writing to one (16 bit) register!")
+      return False
+    if not client.write_register(args.address, builder.to_registers()[0], unit = args.unit):
+      logger.error("Write Registers failed!")
+  elif args.functionCode == 16:
     if not client.write_registers(args.address, builder.to_registers(), unit = args.unit):
       logger.error("Write Registers failed!")
   elif args.functionCode == 15:
