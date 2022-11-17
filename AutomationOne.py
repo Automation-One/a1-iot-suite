@@ -22,6 +22,8 @@ import sys
 import os
 from pathlib import Path
 
+import subprocess
+
 from mbus.MBus import MBus
 import xmltodict
 
@@ -567,16 +569,20 @@ class MBusInterface(Interface):
     self.device = config.get("device",None)
     self.host = config.get("host",None)
     self.port = config.get("port",None)
+    self.use_api = config.get("use_api",True)
     self._lock = False
 
-    if self.device:
-      self.mbus = MBus(device=self.device)
+    if self.use_api is False:
+      logger.info(f"Use of API deactivated for {self.name}. Using console calls instead.")
     else:
-      self.mbus = MBus(host=self.host,port=self.port)
-    
-    
-    self.mbus.connect()
-    logger.info(f"Successfully connected to Mbus {self.name}")
+      if self.device:
+        self.mbus = MBus(device=self.device)
+      else:
+        self.mbus = MBus(host=self.host,port=self.port)
+      
+      
+      self.mbus.connect()
+      logger.info(f"Successfully connected to Mbus {self.name}")
 
   def __del__(self):
     try:
@@ -588,10 +594,7 @@ class MBusInterface(Interface):
   def write(self, unit):
     logger.warning("M-Bus write is not yet implemented!")
 
-  def read(self, unit):
-    while self._lock:
-      time.sleep(0.05)
-    self._lock=True
+  def read_api(self, unit):
     reply_data=None
     result = None
     try:
@@ -604,6 +607,25 @@ class MBusInterface(Interface):
       logger.error(f"Error during read from M-Bus {self.name} with address {unit}")
     if reply_data:
       self.mbus.frame_data_free(reply_data)
+    return result
+  
+  def read_console(self,unit):
+    command = f"mbus-serial-request-data -b 2400 {self.device} {unit}"
+    logger.debug(f"Calling Console command '{command}'.")
+    result = subprocess.check_output(command.split(' '))
+    return result
+  
+  def read(self, unit):
+    while self._lock:
+      time.sleep(0.05)
+    self._lock=True
+    if self.use_api is True:
+      result = self.read_api(unit)
+    elif isinstance(self.use_api, dict) and self.use_api.get(unit,True):
+      result = self.read_api(unit)
+    else:
+      result = self.read_console(unit)
+    
     self._lock=False
     return result
 
