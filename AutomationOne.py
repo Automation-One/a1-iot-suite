@@ -609,7 +609,7 @@ class MBusInterface(Interface):
       self.mbus.frame_data_free(reply_data)
     return result
   
-  def read_console(unit):
+  def read_console(self,unit):
     command = "mbus-serial-request-data -b 2400 {self.device} {unit}"
     logger.debug("Calling Console command '{command}'.")
     result = subprocess.check_output(command.split(' '))
