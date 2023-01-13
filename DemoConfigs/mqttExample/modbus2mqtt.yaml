@@ -1,0 +1,44 @@
+import: callback.py
+
+interfaces:
+  - name: &mqtt MQTT Interface
+    type: MQTT
+    clientID: A1GW-SDK1-004
+    host: test.mosquitto.org
+    port: 1883
+    topicPub: /AutomationOne/A1GW-SDK1-004/Values
+    encoder: jsonEncoder
+
+  - name: Modbus Interface
+    type: Modbus
+    port: /dev/ttymxc2
+    method: rtu
+    baudrate: 115200
+    parity: N
+
+
+nodes:
+  - name: Rotary Switch [Modbus]
+    type: Modbus
+    interface: Modbus Interface
+    unit: 1
+    address: 64
+    accessType: read
+    HoldingRegister: True
+    dataType: float32
+    pollRate:  15
+    sensitivity: 0.1
+
+  - name: Rotary Switch [MQTT]
+    type: MQTT
+    interface: *mqtt
+    accessType: write
+    mqttID: Drehschalter
+
+
+connections:
+  - name: Rotary Switch [Connection]
+    inNode: Rotary Switch [Modbus]
+    outNode: Rotary Switch [MQTT]
+
+
