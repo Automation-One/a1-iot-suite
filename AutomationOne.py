@@ -467,11 +467,13 @@ class MqttInterface(Interface):
 
     self.dryrun = config.get("dryrun",False)
 
+    self.transport = config.get("transport","tcp")
+
     self.subs = {}
 
     self.tls = config.get("tls")
 
-    self.client = mqtt.Client(self.clientID)
+    self.client = mqtt.Client(self.clientID,transport=self.transport)
     
     if self.tls:
       self.client.tls_set(**self.tls)
@@ -482,7 +484,7 @@ class MqttInterface(Interface):
     self.client.enable_logger(logger = logger)
     if self.user:
       self.client.username_pw_set(self.user,self.pw)
-      if not self.tls:
+      if not self.tls and not self.tls is False:
         self.client.tls_set(ca_certs=None, certfile=None, keyfile=None, ciphers=None)
         #self.client.tls_set(ca_certs=None, certfile=None, keyfile=None, ciphers=None,cert_reqs=ssl.PROTOCOL_TLSv1_2)
         #pass
