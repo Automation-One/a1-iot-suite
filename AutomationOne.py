@@ -467,11 +467,13 @@ class MqttInterface(Interface):
 
     self.dryrun = config.get("dryrun",False)
 
+    self.transport = config.get("transport","tcp")
+
     self.subs = {}
 
     self.tls = config.get("tls")
 
-    self.client = mqtt.Client(self.clientID)
+    self.client = mqtt.Client(self.clientID,transport=self.transport)
     
     if self.tls:
       self.client.tls_set(**self.tls)
@@ -482,7 +484,7 @@ class MqttInterface(Interface):
     self.client.enable_logger(logger = logger)
     if self.user:
       self.client.username_pw_set(self.user,self.pw)
-      if not self.tls:
+      if not self.tls and not self.tls is False:
         self.client.tls_set(ca_certs=None, certfile=None, keyfile=None, ciphers=None)
         #self.client.tls_set(ca_certs=None, certfile=None, keyfile=None, ciphers=None,cert_reqs=ssl.PROTOCOL_TLSv1_2)
         #pass
@@ -528,6 +530,9 @@ class MqttInterface(Interface):
     
   def start(self):
     super().start()
+    self.client.loop()
+    if not self.client.is_connected():
+      logger.warning(f"MQTT interface {self.name} did not connect successfully on first try.")
     self.client.loop_start()
 
   def stop(self):
@@ -555,11 +560,15 @@ class MqttInterface(Interface):
   def publish(self,payload,topicPub=None):
     if not topicPub:
       topicPub = self.topicPub
+    if not self.client.is_connected():
+      logger.error(f"Could not Publish via Interface {self.name} to topic {topicPub} with payload {payload} due to not being connected!")
+      return False
     if self.dryrun:
       logger.debug("[Dryrun] Publishing via Interface {} to topic {} with payload {}...".format(self.name, topicPub,payload))
-      return 
+      return True
     logger.debug("Publishing via Interface {} to topic {} with payload {}...".format(self.name, topicPub,payload))
     self.client.publish(topicPub,payload)
+    return True
 
 
 class MBusInterface(Interface):
