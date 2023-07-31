@@ -530,6 +530,9 @@ class MqttInterface(Interface):
     
   def start(self):
     super().start()
+    self.client.loop()
+    if not self.client.is_connected():
+      logger.warning(f"MQTT interface {self.name} did not connect successfully on first try.")
     self.client.loop_start()
 
   def stop(self):
