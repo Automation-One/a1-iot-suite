@@ -560,11 +560,15 @@ class MqttInterface(Interface):
   def publish(self,payload,topicPub=None):
     if not topicPub:
       topicPub = self.topicPub
+    if not self.client.is_connected():
+      logger.error(f"Could not Publish via Interface {self.name} to topic {topicPub} with payload {payload} due to not being connected!")
+      return False
     if self.dryrun:
       logger.debug("[Dryrun] Publishing via Interface {} to topic {} with payload {}...".format(self.name, topicPub,payload))
-      return 
+      return True
     logger.debug("Publishing via Interface {} to topic {} with payload {}...".format(self.name, topicPub,payload))
     self.client.publish(topicPub,payload)
+    return True
 
 
 class MBusInterface(Interface):
