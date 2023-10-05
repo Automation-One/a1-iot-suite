@@ -74,46 +74,48 @@ class ModbusNode(Node):
             self.pushValue()
 
     def pullValue(self):
-        if self.read:
-            for i in range(self.retries):
-                data = self.interface.read(self.address, self._count, self.unit,self.holding)
-                #logger.debug("[Node {}] received data: {}".format(self.name,data))
-                try:
-                    if len(data.registers)>0:
-                        break
-                except:
-                    pass
-                if i+1 < self.retries:
-                    logger.debug(f"[{self.name}] Retrying reading Value...")
-            if isinstance(data, ModbusIOException) or isinstance(data,ExceptionResponse):
-                logger.error("[Node {}] {}".format(self.name,data))
-                return self.value
-            decoder =  BinaryPayloadDecoder.fromRegisters(data.registers,byteorder=self.byteorder,wordorder=self.wordorder)
+        if not self.read:
+            return self.value
 
-            if self.dataType == "int16":
-                value = decoder.decode_16bit_int()
-            elif self.dataType == "int32":
-                value = decoder.decode_32bit_int()
-            elif self.dataType == "int64":
-                value = decoder.decode_64bit_int()
+        for i in range(self.retries):
+            data = self.interface.read(self.address, self._count, self.unit,self.holding)
+            #logger.debug("[Node {}] received data: {}".format(self.name,data))
+            try:
+                if len(data.registers)>0:
+                    break
+            except:
+                pass
+            if i+1 < self.retries:
+                logger.debug(f"[{self.name}] Retrying reading Value...")
+        if isinstance(data, ModbusIOException) or isinstance(data,ExceptionResponse):
+            logger.error("[Node {}] {}".format(self.name,data))
+            return self.value
+        decoder =  BinaryPayloadDecoder.fromRegisters(data.registers,byteorder=self.byteorder,wordorder=self.wordorder)
 
-            elif self.dataType == "uint16":
-                value = decoder.decode_16bit_uint()
-            elif self.dataType == "uint32":
-                value = decoder.decode_32bit_uint()
-            elif self.dataType == "uint64":
-                value = decoder.decode_64bit_uint()
+        if self.dataType == "int16":
+            value = decoder.decode_16bit_int()
+        elif self.dataType == "int32":
+            value = decoder.decode_32bit_int()
+        elif self.dataType == "int64":
+            value = decoder.decode_64bit_int()
 
-            elif self.dataType == "float32":
-                value = decoder.decode_32bit_float()
-            elif self.dataType == "float16":
-                value = decoder.decode_16bit_float()
-            elif self.dataType == "float64":
-                value = decoder.decode_64bit_float()
+        elif self.dataType == "uint16":
+            value = decoder.decode_16bit_uint()
+        elif self.dataType == "uint32":
+            value = decoder.decode_32bit_uint()
+        elif self.dataType == "uint64":
+            value = decoder.decode_64bit_uint()
 
-            #logger.debug("[VALUE] {} => {}".format(self.name,value))
-            self.setValue(value)
-            return value
+        elif self.dataType == "float32":
+            value = decoder.decode_32bit_float()
+        elif self.dataType == "float16":
+            value = decoder.decode_16bit_float()
+        elif self.dataType == "float64":
+            value = decoder.decode_64bit_float()
+
+        #logger.debug("[VALUE] {} => {}".format(self.name,value))
+        self.setValue(value)
+        return value
 
     def _init_timeloop(self, timeloop):
         super()._init_timeloop(timeloop)
@@ -122,31 +124,31 @@ class ModbusNode(Node):
             logger.debug("Added {} to Timeloop.".format(self.name))
 
     def pushValue(self):
-        if not self.read:
-            #logger.debug("pushing Value")
-            builder = BinaryPayloadBuilder(byteorder=self.byteorder,wordorder=self.wordorder)
-            if self.dataType == "int16":
-                builder.add_16bit_int(int(self.value))
-            elif self.dataType == "int32":
-                builder.add_32bit_int(int(self.value))
-            elif self.dataType == "int64":
-                builder.add_64bit_int(int(self.value))
+        if self.read:
+            return
+        builder = BinaryPayloadBuilder(byteorder=self.byteorder,wordorder=self.wordorder)
+        if self.dataType == "int16":
+            builder.add_16bit_int(int(self.value))
+        elif self.dataType == "int32":
+            builder.add_32bit_int(int(self.value))
+        elif self.dataType == "int64":
+            builder.add_64bit_int(int(self.value))
 
-            elif self.dataType == "uint16":
-                builder.add_16bit_uint(int(self.value))
-            elif self.dataType == "uint32":
-                builder.add_32bit_uint(int(self.value))
-            elif self.dataType == "uint64":
-                builder.add_64bit_uint(int(self.value))
+        elif self.dataType == "uint16":
+            builder.add_16bit_uint(int(self.value))
+        elif self.dataType == "uint32":
+            builder.add_32bit_uint(int(self.value))
+        elif self.dataType == "uint64":
+            builder.add_64bit_uint(int(self.value))
 
-            elif self.dataType == "float16":
-                builder.add_16bit_float(float(self.value))
-            elif self.dataType == "float32":
-                builder.add_32bit_float(float(self.value))
-            elif self.dataType == "float64":
-                builder.add_64bit_float(float(self.value))
-            registers = builder.to_registers()
-            self.interface.write(registers, self.address, self.unit)
+        elif self.dataType == "float16":
+            builder.add_16bit_float(float(self.value))
+        elif self.dataType == "float32":
+            builder.add_32bit_float(float(self.value))
+        elif self.dataType == "float64":
+            builder.add_64bit_float(float(self.value))
+        registers = builder.to_registers()
+        self.interface.write(registers, self.address, self.unit)
 
     def setValue(self,value):
         super().setValue(value)
