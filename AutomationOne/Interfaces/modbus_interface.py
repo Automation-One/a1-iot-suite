@@ -1,7 +1,10 @@
 import logging
 import time
 
-from pymodbus.client import ModbusSerialClient, ModbusTcpClient
+try:
+    from pymodbus.client import ModbusSerialClient, ModbusTcpClient
+except:
+    from pymodbus.client.sync import ModbusSerialClient, ModbusTcpClient
 from pymodbus.exceptions import ModbusIOException
 
 from .interface import Interface
