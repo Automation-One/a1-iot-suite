@@ -1,0 +1,54 @@
+# This tutorial shows how to build the some statistics of a given data set
+#
+# For this, we use a Random Number is Generated and then calculate its minimal and maximal values
+# as well as the average and sum over 60 seconds
+#
+# In order to generate the statistics, we set up a custom connection, which we call every second.
+# This connection demands an update of all inNodes prior to every execution (see Update_on_Demand Tutorial)
+#
+# The connection than calles the custom calculate_statistics function. This function saves all incoming values and
+# calculates its statistics after a number of times, this funciton was called, which is specified by the count parameter
+#
+# The Output of this callback is then split/unpacked to the predefined nodes, which then Log the value on Change.
+
+import: callback.py
+
+nodes:
+  - name: Random1
+    default: 0
+    type: Function
+    callback: getRand
+    onChange: log_value
+
+  - name: Min
+    onChange: log_value
+
+  - name: Max
+    onChange: log_value
+
+  - name: Sum
+    onChange: log_value
+
+  - name: Avg
+    onChange: log_value
+
+connections:
+  - name: Build Statistics
+    type: custom
+    callback: calculate_statistics
+    frequency: 1          # Call this Function every Second
+    demandUpdate: true    # Demand an Update of the Random1 Node
+    inNode:
+      - "Random1"
+    outNode:
+      - "Min"
+      - "Max"
+      - "Sum"
+      - "Avg"
+    split: true           # Unpack the values coming from the callback and split them onto
+                          # the outNodes => First Value to "Min" and so on
+
+    kwargs:               # Give Additional Key-word arguments for the function
+      count: 60           # Set how often the statistics should be calculated. In this case
+                          # every 60 values. Since this connection demands one value per second, this is roughly
+                          # once per minute. (Roughly due to a slight execution overhead.)
