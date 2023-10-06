@@ -9,7 +9,7 @@
 # The connection than calles the custom calculate_statistics function. This function saves all incoming values and
 # calculates its statistics after a number of times, this funciton was called, which is specified by the count parameter
 #
-# The Output of this callback is then split/unpacked to the predefined nodes, which then Log the value on Change.
+# The Output of this callback is then split/unpacked to the predefined nodes, which then Log the value on Change. 
 
 import: callback.py
 
@@ -52,3 +52,4 @@ connections:
       count: 60           # Set how often the statistics should be calculated. In this case
                           # every 60 values. Since this connection demands one value per second, this is roughly
                           # once per minute. (Roughly due to a slight execution overhead.)
+      token: "Random1 Statistics" # A unique token in order to be able to reuse the calculate_statistics callback

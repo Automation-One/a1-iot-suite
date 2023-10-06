@@ -16,19 +16,21 @@ def getRand(node):
     node.setValue(random.random())
 
 
-def calculate_statistics(value,count):
+def calculate_statistics(value,count,token):
     """Callback function for calculating the minimum, maximum and average values over a specified time span"""
-    calculate_statistics.values.append(value[0]) # We get the values in form of [value] therefore we have to unpack it first.
-    n = len(calculate_statistics.values)
+    if not token in calculate_statistics.values.keys():
+        calculate_statistics.values[token] = []
+    calculate_statistics.values[token].append(value[0]) # We get the values in form of [value] therefore we have to unpack it first.
+    n = len(calculate_statistics.values[token])
     if n < count:
         return None
-    minimum = min(calculate_statistics.values)
-    maximum = max(calculate_statistics.values)
-    total = sum(calculate_statistics.values)
+    minimum = min(calculate_statistics.values[token])
+    maximum = max(calculate_statistics.values[token])
+    total = sum(calculate_statistics.values[token])
     average = total/n
-    calculate_statistics.values = []
+    calculate_statistics.values[token] = []
     return [minimum, maximum, total, average]
-calculate_statistics.values = []
+calculate_statistics.values = {}
 
 
 
