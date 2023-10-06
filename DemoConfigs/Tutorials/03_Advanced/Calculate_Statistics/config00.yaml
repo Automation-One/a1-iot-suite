@@ -9,7 +9,14 @@
 # The connection than calles the custom calculate_statistics function. This function saves all incoming values and
 # calculates its statistics after a number of times, this funciton was called, which is specified by the count parameter
 #
-# The Output of this callback is then split/unpacked to the predefined nodes, which then Log the value on Change. 
+# The Output of this callback is then split/unpacked to the predefined nodes, which then Log the value on Change.
+#
+# Comments:
+#   - It is not necessary to use the demandUpdate feature. It would have been equivalent to call set a frequency for the Random1
+#     Node and use the onChange feature. However I think, it makes more sense to have the count and frequency in the same node.
+#   - Similarly, it is also possible to build statistics over a fixed time-frame with inconsistent source data. This is a little bit
+#     more involved, as one has to also save the time-stamps for each datapoint and then evaluate it properly, but it makes the code
+#     also more resistant to execution time delays.
 
 import: callback.py
 
