@@ -1,4 +1,4 @@
-import: /home/root/AutomationOne/DemoConfigs/DemoCallback.py
+import: DemoCallback.py
 
 
 logging:
