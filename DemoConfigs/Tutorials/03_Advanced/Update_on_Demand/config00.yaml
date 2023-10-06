@@ -44,8 +44,6 @@ nodes:
     onChange: log_value
 
 connections:
-
-connections:
   - name: Addition1
     type: custom
     callback: add_Nodes

@@ -11,8 +11,6 @@ logger = logging.getLogger("AutomationOne")
 
 def getRand(node):
     """Callback function for getting a random number"""
-    # Notice, that we set 
-
     node.setValue(random.random())
 
 
