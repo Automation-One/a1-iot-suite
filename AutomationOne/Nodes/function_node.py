@@ -17,3 +17,9 @@ class FunctionNode(Node):
         super()._init_timeloop(timeloop)
         if self.frequency:
             timeloop._add_job(self.call, timedelta(seconds=self.frequency))
+
+    def onDemandUpdate(self):
+        self.no_onchange_forward = True
+        self.call()
+        self.no_onchange_forward = False
+        return True;

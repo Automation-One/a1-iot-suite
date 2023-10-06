@@ -73,7 +73,7 @@ class ModbusNode(Node):
             self.pullValue()
             self.pushValue()
 
-    def pullValue(self):
+    def pullValue(self,no_onchange_forward=False):
         if not self.read:
             return self.value
 
@@ -114,7 +114,7 @@ class ModbusNode(Node):
             value = decoder.decode_64bit_float()
 
         #logger.debug("[VALUE] {} => {}".format(self.name,value))
-        self.setValue(value)
+        self.setValue(value,no_onchange_forward = no_onchange_forward)
         return value
 
     def _init_timeloop(self, timeloop):
@@ -150,8 +150,15 @@ class ModbusNode(Node):
         registers = builder.to_registers()
         self.interface.write(registers, self.address, self.unit)
 
-    def setValue(self,value):
-        super().setValue(value)
+    def onDemandUpdate(self):
+        if self.read:
+            self.pullValue(no_onchange_forward=True)
+            logger.debug(f"[{self.name}] Modbus value pulled due to demand.")
+            return True
+        return False # Nothing done
+
+    def setValue(self,value,no_onchange_forward = False):
+        super().setValue(value, no_onchange_forward = no_onchange_forward)
         self.pushValue()
 
     def __str__(self):

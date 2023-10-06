@@ -1,0 +1,66 @@
+# This tutorial gives a more in depth explanation on how to use the "update on demand" feature
+#
+#
+# Normally, the update-flow is only forward. That means, that something changes, and as a result of this
+# another thing changes, and so on. Therefore a change is rippeling "forward" through the node-chain.
+#
+# However sometimes, the reverse of this is wanted: A specific value is needed, but it depends on another
+# previous value, which might depend on another previous value and so on. Therefore we have introduced an
+# "update on demand" or "ripple backwards" feature, which lets us solve exactly this kind of problem.
+#
+#
+# For this example, we assume, that we want to periodically get a value, which is the sum of 3 other values.
+# We always want the values, which we add to be as up-to-date as possible. The 3 other values are in this case
+# simulated by a calling a random function. In order to show, that the update-effect ripples backwards through
+# the the "node-chain", we are first adding two values in order to get an intermediate result and then adding
+# the third.
+
+import: callback.py
+
+nodes:
+  - name: Random1
+    default: 0
+    type: Function
+    callback: getRand
+    onChange: log_value
+
+  - name: Random2
+    default: 0
+    type: Function
+    callback: getRand
+    onChange: log_value
+
+  - name: Random3
+    default: 0
+    type: Function
+    callback: getRand
+    onChange: log_value
+
+  - name: Intermediate
+    onChange: log_value
+    default: 0
+
+  - name: Result
+    onChange: log_value
+
+connections:
+
+connections:
+  - name: Addition1
+    type: custom
+    callback: add_Nodes
+    inNode:
+      - "Random1"
+      - "Random2"
+    outNode: Intermediate
+
+
+  - name: Addition2
+    type: custom
+    callback: add_Nodes
+    frequency: 5          # Call this Function every 5 Seconds
+    demandUpdate: true    # Demand an Update of all Previous Nodes
+    inNode:
+      - "Intermediate"
+      - "Random3"
+    outNode: Result

@@ -13,7 +13,7 @@ class Connection:
         self.frequency = config.get("frequency",False)
         self.on_change = config.get("execute_on_change", not self.frequency)
         self.delay = config.get("delay", 0)
-
+        self.demand = config.get("demandUpdate",False)
 
         self.doOnStartup = config.get("doOnStartup",False)
 
@@ -47,6 +47,8 @@ class Connection:
         if self.delay:
             logger.debug(f"Delaying execution of connection {self.name} by {self.delay} seconds")
             time.sleep(self.delay)
+        if self.demand:
+            self.demandUpdate([])
         logger.debug("Executing connection {}".format(self.name))
 
     def register(self):
@@ -57,6 +59,19 @@ class Connection:
         else:
             if self.on_change:
                 self.inNode.registerOnChange(self)
+        if isinstance(self.outNode,list):
+            for node in self.outNode:
+                node.registerResultOf(self)
+        else:
+            self.outNode.registerResultOf(self)
+
+    def demandUpdate(self,updated):
+        logger.debug(f"[{self.name}] update demanded...")
+        if isinstance(self.inNode,list):
+            for node in self.inNode:
+                node.demandUpdate(updated)
+        else:
+            self.inNode.demandUpdate(updated)
 
     def __str__(self):
         return "{} with name {}".format(self.__class__.__name__,self.name)

@@ -39,7 +39,7 @@ class MBusNode(Node):
         if self.doOnStartup:
             self.pullValue()
 
-    def pullValue(self):
+    def pullValue(self, no_onchange_forward = False):
         data = self.interface.read(self.unit)
         if not self.fields and data is not None:
             return data
@@ -55,7 +55,7 @@ class MBusNode(Node):
             value =  {key:getPathFromDir(data_dict,path,self.name) for (key,path) in self.fields.items()}
         else:
             value =  getPathFromDir(data_dict,self.fields,self.name)
-        self.setValue(value)
+        self.setValue(value, no_onchange_forward = no_onchange_forward)
         return value
 
     def _init_timeloop(self, timeloop):
@@ -67,8 +67,12 @@ class MBusNode(Node):
     def pushValue(self):
         logger.warning("Push not implemented for MBus.")
 
-    def setValue(self,value):
-        super().setValue(value)
+    def onDemandUpdate(self):
+        if self.read:
+            self.pullValue(no_onchange_forward=True)
+            logger.debug(f"[{self.name}] MBus value pulled due to demand.")
+            return True
+        return False # Nothing done
 
 
 

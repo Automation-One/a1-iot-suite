@@ -19,6 +19,7 @@ class CustomConnection(Connection):
         if not isinstance(self.args,list):
             self.args = [self.args]
         self.kwargs = config.get("kwargs",{})
+
     def execute(self):
         super().execute()
         try:
