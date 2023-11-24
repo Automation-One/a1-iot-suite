@@ -13,16 +13,23 @@ class SimpleConnection(Connection):
         self.offset = config.get("offset",0)
         self.dictionary = config.get("as_dictionary",False)
 
+    def transform_value(self,value):
+        try:
+            return value*self.factor+self.offset
+        except:
+            return value
+
+
     def execute(self):
         super().execute()
         try:
             if isinstance(self.inNode,list):
                 if self.dictionary:
-                    value = {node.name:node.getValue()*self.factor+self.offset for node in self.inNode}
+                    value = {node.name:self.transform_value(node.getValue()) for node in self.inNode}
                 else:
-                    value = [node.getValue()*self.factor+self.offset for node in self.inNode]
+                    value = [self.transform_value(node.getValue()) for node in self.inNode]
             else:
-                value = self.inNode.getValue()*self.factor+self.offset
+                value = self.transform_value(self.inNode.getValue())
             self.outNode.setValue(value)
         except Exception as inst:
             logger.exception("Error during execution of Connection {}.".format({self.name}))
