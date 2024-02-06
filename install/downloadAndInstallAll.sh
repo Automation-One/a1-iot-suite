@@ -11,7 +11,7 @@ tmpdir=$(mktemp -d)
 
 cd $tmpdir
 
-wget "https://github.com/Automation-One/a1-iot-suite/archive/refs/heads/$branch.zip"
+curl -LO "https://github.com/Automation-One/a1-iot-suite/archive/refs/heads/$branch.zip"
 unzip $branch.zip > /dev/null
 
 install_path="$tmpdir/a1-iot-suite-$branch/install/"
