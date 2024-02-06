@@ -66,9 +66,12 @@ class ModbusInterface(Interface):
         if self.force_delay_per_unit:
             self.unit_lock[unit] = time.time() + self.force_delay_per_unit
 
-    def write(self, registers, address, unit = None):
+    def write(self, registers, address, unit = None, single=False):
         self.check_lock(unit)
-        self.client_modbus.write_registers(address, registers, unit = unit)
+        if not single:
+            self.client_modbus.write_registers(address, registers, unit = unit)
+        else:
+            self.client_modbus.write_register(address, registers[0], unit = unit)
 
     def read(self, address, count, unit,holding = False):
         self.check_lock(unit)

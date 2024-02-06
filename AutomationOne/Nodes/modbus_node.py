@@ -56,6 +56,7 @@ class ModbusNode(Node):
             raise NotImplementedError(f"DataType {self.dataType} not implemented for ModbusNode.")
 
         self.holding = config.get("HoldingRegister",False)
+        self.single = config.get("Single",False)
 
         self.accessType = config.get("accessType")
         self.read = not (self.accessType=="write")
@@ -148,7 +149,7 @@ class ModbusNode(Node):
         elif self.dataType == "float64":
             builder.add_64bit_float(float(self.value))
         registers = builder.to_registers()
-        self.interface.write(registers, self.address, self.unit)
+        self.interface.write(registers, self.address, self.unit,self.single)
 
     def onDemandUpdate(self):
         if self.read:
