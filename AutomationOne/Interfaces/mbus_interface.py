@@ -19,6 +19,7 @@ class MBusInterface(Interface):
         self.host = config.get("host",None)
         self.port = config.get("port",None)
         self.use_api = config.get("use_api",True)
+        self.timeout = config.get("timeout",10)
         self._lock = False
 
         if self.use_api is False:
@@ -61,7 +62,11 @@ class MBusInterface(Interface):
     def read_console(self,unit):
         command = f"mbus-serial-request-data -b 2400 {self.device} {unit}"
         logger.debug(f"Calling Console command '{command}'.")
-        result = subprocess.check_output(command.split(' '))
+        try:
+            result = subprocess.check_output(command.split(' '),timeout=self.timeout)
+        except:
+            logger.error(f"[{self.name}] Exception found during subprocess call to mbus.")
+            result = ""
         return result
 
     def read(self, unit):
