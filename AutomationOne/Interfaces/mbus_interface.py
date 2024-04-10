@@ -20,6 +20,7 @@ class MBusInterface(Interface):
         self.port = config.get("port",None)
         self.use_api = config.get("use_api",True)
         self.timeout = config.get("timeout",10)
+        self.force_delay = config.get("force_delay", 1)
         self._lock = False
 
         if self.use_api is False:
@@ -80,5 +81,7 @@ class MBusInterface(Interface):
         else:
             result = self.read_console(unit)
 
+        if self.force_delay:
+            time.sleep(self.force_delay)
         self._lock=False
         return result
