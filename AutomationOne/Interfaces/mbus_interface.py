@@ -36,6 +36,8 @@ class MBusInterface(Interface):
             logger.info(f"Successfully connected to Mbus {self.name}")
 
     def __del__(self):
+        if not self.use_api:
+            return
         try:
             self.mbus.disconnect()
             logger.info(f"Successfully disconnected from Mbus {self.name}")
