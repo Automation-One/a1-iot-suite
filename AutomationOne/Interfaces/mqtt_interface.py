@@ -45,11 +45,14 @@ class MqttInterface(Interface):
 
         self.topicPub = config.get("topicPub","")
 
-        self.parserName = config.get("parser","ultralight2")
+        self.parserName = config.get("parser",None)
         if self.parserName == "ultralight2":
             self.parser = ultralight2
-        else:
+        elif self.parserName:
             self.parser = getattr(handler.callbackModule,self.parserName)
+        else:
+            self.parser = None
+            logger.info(f"MQTT Interface {self.name} has no parser given. Ignoring incoming messages...")
 
         self.encoderName = config.get("encoder","simple")
         if self.encoderName == "simple":
@@ -89,7 +92,8 @@ class MqttInterface(Interface):
         topic = message.topic
         payload = message.payload
         logger.debug("Received MQTT message with topic {} and payload {}.".format(topic,payload))
-        self.parser(self, userdata, message)
+        if self.parser:
+            self.parser(self, userdata, message)
 
     def on_connect(self, client, userdata, flags, rc):
         if rc==0:
