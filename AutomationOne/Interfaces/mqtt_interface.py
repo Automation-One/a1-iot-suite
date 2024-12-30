@@ -2,6 +2,7 @@ import logging
 import time
 
 import paho.mqtt.client as mqtt
+from paho.mqtt import __version__ as MQTT_VERSION
 
 from .interface import Interface
 
@@ -66,7 +67,10 @@ class MqttInterface(Interface):
         self.subs = {}
         self.tls = config.get("tls")
 
-        self.client = mqtt.Client(self.clientID,transport=self.transport)
+        if tuple(map(int, MQTT_VERSION.split('.'))) < (2, 0, 0):
+            self.client = mqtt.Client(client_id=self.clientID,transport=self.transport)
+        else:
+            self.client = mqtt.Client(callback_api_version=mqtt.CallbackAPIVersion.VERSION1,client_id=self.clientID,transport=self.transport)
 
         if self.tls:
             self.client.tls_set(**self.tls)
