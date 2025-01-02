@@ -7,7 +7,12 @@ import logging
 import argparse
 import yaml
 
-from pymodbus.client.sync import ModbusSerialClient, ModbusTcpClient
+try:
+    from pymodbus.client import ModbusSerialClient, ModbusTcpClient
+except:
+    from pymodbus.client.sync import ModbusSerialClient, ModbusTcpClient
+
+from pymodbus.exceptions import ModbusIOException
 from pymodbus.exceptions import ModbusIOException
 from pymodbus.pdu import ExceptionResponse
 from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
