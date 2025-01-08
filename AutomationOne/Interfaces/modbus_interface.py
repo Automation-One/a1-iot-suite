@@ -6,6 +6,7 @@ try:
 except:
     from pymodbus.client.sync import ModbusSerialClient, ModbusTcpClient
 from pymodbus.exceptions import ModbusIOException
+from pymodbus import __version__ as PYMODBUS_VERSION
 
 from .interface import Interface
 
@@ -83,17 +84,25 @@ class ModbusInterface(Interface):
 
     def write(self, registers, address, unit=None):
         self.check_lock(unit)
-        self.client_modbus.write_registers(address, registers, unit=unit)
+        if tuple(map(int, PYMODBUS_VERSION.split("."))) < (3, 3, 0):
+            unit_args = {"unit": unit}
+        else:
+            unit_args = {"slave": unit}
+        self.client_modbus.write_registers(address, registers, **unit_args)
 
     def read(self, address, count, unit, holding=False):
         self.check_lock(unit)
+        if tuple(map(int, PYMODBUS_VERSION.split("."))) < (3, 3, 0):
+            unit_args = {"unit": unit}
+        else:
+            unit_args = {"slave": unit}
         if holding:
             result = self.client_modbus.read_holding_registers(
-                address=address, count=count, unit=unit
+                address=address, count=count, **unit_args
             )
         else:
             result = self.client_modbus.read_input_registers(
-                address=address, count=count, unit=unit
+                address=address, count=count, **unit_args
             )
         self.ReadRequests += 1
         if isinstance(result, ModbusIOException):
