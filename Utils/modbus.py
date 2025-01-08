@@ -14,6 +14,7 @@ except:
 from pymodbus.exceptions import ModbusIOException
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder
 from pymodbus.pdu import ExceptionResponse
+from pymodbus import __version__ as PYMODBUS_VERSION
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
@@ -315,8 +316,12 @@ def run(args):
                 logger.error("Datatype is not supported.")
                 return False
 
+    if tuple(map(int, PYMODBUS_VERSION.split("."))) < (3, 3, 0):
+        unit_args = {"unit": args.unit}
+    else:
+        unit_args = {"slave": args.unit}
     if args.functionCode == 1:
-        result = client.read_coils(args.address, count=args.count, unit=args.unit)
+        result = client.read_coils(args.address, count=args.count, **unit_args)
         if isinstance(result, modbus_exception_list):
             logger.exception(result)
             return False
@@ -325,7 +330,7 @@ def run(args):
 
     elif args.functionCode == 3:
         result = client.read_holding_registers(
-            args.address, count=args.count, unit=args.unit
+            args.address, count=args.count, **unit_args
         )
         if isinstance(result, modbus_exception_list):
             logger.exception(result)
@@ -335,7 +340,7 @@ def run(args):
 
     elif args.functionCode == 4:
         result = client.read_input_registers(
-            args.address, count=args.count, unit=args.unit
+            args.address, count=args.count, **unit_args
         )
         if isinstance(result, modbus_exception_list):
             logger.exception(result)
@@ -350,16 +355,16 @@ def run(args):
             )
             return False
         if not client.write_register(
-            args.address, builder.to_registers()[0], unit=args.unit
+            args.address, builder.to_registers()[0], **unit_args
         ):
             logger.error("Write Registers failed!")
     elif args.functionCode == 16:
         if not client.write_registers(
-            args.address, builder.to_registers(), unit=args.unit
+            args.address, builder.to_registers(), **unit_args
         ):
             logger.error("Write Registers failed!")
     elif args.functionCode == 15:
-        if not client.write_coils(args.address, builder.to_coils(), unit=args.unit):
+        if not client.write_coils(args.address, builder.to_coils(), **unit_args):
             logger.error("Write Coils failed!")
 
     else:
