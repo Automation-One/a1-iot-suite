@@ -2,8 +2,9 @@ import logging
 
 logger = logging.getLogger("AutomationOne")
 
+
 class Interface:
-    def __init__(self,handler,config = None):
+    def __init__(self, handler, config=None):
         if config is None:
             config = {}
         self.name = config.get("name")
@@ -17,5 +18,5 @@ class Interface:
     def stop(self):
         pass
 
-    def _init_timeloop(self,timeloop):
+    def _init_timeloop(self, timeloop):
         pass

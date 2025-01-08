@@ -1,4 +1,3 @@
-
 import importlib
 import importlib.util
 import logging
@@ -11,7 +10,6 @@ from .Interfaces import *
 from .Nodes import *
 
 
-
 from pathlib import Path
 from timeloop import Timeloop
 
@@ -21,30 +19,31 @@ logger = logging.getLogger("AutomationOne")
 
 def initLogger(config):
     if not "version" in config:
-        config["version"]=1
+        config["version"] = 1
 
-    formatters = config.get("formatters",{})
+    formatters = config.get("formatters", {})
     if not "AutomationOne" in formatters:
-        formatters["AutomationOne"] = {"format": '[%(levelname)s]  %(message)s'}
+        formatters["AutomationOne"] = {"format": "[%(levelname)s]  %(message)s"}
     if not "AutomationOnePlusTime" in formatters:
-        formatters["AutomationOnePlusTime"]= {"format": '%(asctime)s [%(levelname)s]  %(message)s'}
+        formatters["AutomationOnePlusTime"] = {
+            "format": "%(asctime)s [%(levelname)s]  %(message)s"
+        }
     config["formatters"] = formatters
 
     if not "loggers" in config:
-        handlers = config.get("handlers",{}).keys()
+        handlers = config.get("handlers", {}).keys()
         loggerConfig = {"AutomationOne": {"handlers": handlers}}
         config["loggers"] = loggerConfig
     logging.config.dictConfig(config)
 
 
 class Handler:
-    def __init__ (self):
+    def __init__(self):
         self.interfaces = {}
         self.nodes = {}
         self.connections = {}
 
         self.timeloop = None
-
 
     def start(self):
         return self._start()
@@ -73,7 +72,9 @@ class Handler:
                 logger.exception("Exception during start() of Node.")
         for connection in self.connections.values():
             try:
-                logger.info("Calling start() for connection {}.".format(connection.name))
+                logger.info(
+                    "Calling start() for connection {}.".format(connection.name)
+                )
                 connection.start()
             except:
                 logger.exception("Exception during start() for connection")
@@ -98,7 +99,6 @@ class Handler:
             return True
         return False
 
-
     def _start(self):
         if not self._create_timeloop():
             logger.warning("Timeloop is already running and cannot be started again.")
@@ -115,7 +115,6 @@ class Handler:
             return True
         logger.warning("Timeloop ist not running and can therefore not be stopped.")
         return False
-
 
     def _finalize(self):
         self._stop()
@@ -140,17 +139,20 @@ class Handler:
         finally:
             self._finalize()
 
-
-    def parseConfig(self,file):
+    def parseConfig(self, file):
         logger.info("Loading Configuration File {}".format(file))
-        with open(file, 'r') as stream:
+        with open(file, "r") as stream:
             config = yaml.safe_load(stream)
 
         if "logging" in config:
             initLogger(config.get("logging"))
         else:
-            fileHandler = logging.handlers.RotatingFileHandler("AutomationOne.log",maxBytes=1e6,backupCount=1)
-            fileFormatter = logging.Formatter('%(asctime)s [%(levelname)s]  %(message)s')
+            fileHandler = logging.handlers.RotatingFileHandler(
+                "AutomationOne.log", maxBytes=1e6, backupCount=1
+            )
+            fileFormatter = logging.Formatter(
+                "%(asctime)s [%(levelname)s]  %(message)s"
+            )
             fileHandler.setFormatter(fileFormatter)
             logger.addHandler(fileHandler)
 
@@ -164,32 +166,33 @@ class Handler:
                 import_path = Path(file).resolve().parent / import_path
             logger.info("Importing Callback file {}".format(import_path))
 
-            spec = importlib.util.spec_from_file_location("Callback",import_path)
+            spec = importlib.util.spec_from_file_location("Callback", import_path)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
             self.callbackModule = module
         else:
             self.callbackModule = None
 
-
         logger.debug("Callback Modul: {}".format(self.callbackModule))
 
         self.initCallbackName = config.get("initCallback")
-        self.initCallback2Name = config.get("initCallback2") #Performed after all other initializations
+        self.initCallback2Name = config.get(
+            "initCallback2"
+        )  # Performed after all other initializations
         self.finalCallbackName = config.get("finalCallback")
 
         if self.initCallbackName:
-            self.initCallback = getattr(self.callbackModule,self.initCallbackName)
+            self.initCallback = getattr(self.callbackModule, self.initCallbackName)
         else:
             self.initCallback = None
 
         if self.initCallback2Name:
-            self.initCallback2 = getattr(self.callbackModule,self.initCallback2Name)
+            self.initCallback2 = getattr(self.callbackModule, self.initCallback2Name)
         else:
             self.initCallback2 = None
 
         if self.finalCallbackName:
-            self.finalCallback = getattr(self.callbackModule,self.finalCallbackName)
+            self.finalCallback = getattr(self.callbackModule, self.finalCallbackName)
         else:
             self.finalCallback = None
 
@@ -209,87 +212,117 @@ class Handler:
             for connectionConfig in config["connections"]:
                 self.parseConnection(connectionConfig)
 
-
         self.config = config
-        self.custom = config.get("custom",{})
+        self.custom = config.get("custom", {})
 
-    def parseInterface(self,interfaceConfig):
+    def parseInterface(self, interfaceConfig):
         interfaceType = interfaceConfig.get("type")
         try:
             if interfaceType == "Modbus":
-                interface = ModbusInterface(self,interfaceConfig)
+                interface = ModbusInterface(self, interfaceConfig)
             elif interfaceType == "MQTT":
-                interface = MqttInterface(self,interfaceConfig)
+                interface = MqttInterface(self, interfaceConfig)
             elif interfaceType == "MBus":
-                interface = MBusInterface(self,interfaceConfig)
+                interface = MBusInterface(self, interfaceConfig)
             else:
-                logger.error("The interface type was not recognized! (config = {})".format(interfaceConfig))
+                logger.error(
+                    "The interface type was not recognized! (config = {})".format(
+                        interfaceConfig
+                    )
+                )
                 return False
         except:
-            logger.exception("The Interface could not be created! (config = {})".format(interfaceConfig))
+            logger.exception(
+                "The Interface could not be created! (config = {})".format(
+                    interfaceConfig
+                )
+            )
             return False
         return self.addInterface(interface)
 
-    def addInterface(self,interface):
+    def addInterface(self, interface):
         if interface.name in self.interfaces:
-            logger.warning("An interface with name {} already exists! Ignoring new interface!".format(interface.name))
+            logger.warning(
+                "An interface with name {} already exists! Ignoring new interface!".format(
+                    interface.name
+                )
+            )
             return False
         else:
             self.interfaces[interface.name] = interface
             logger.debug("Added interface: {}".format(interface))
             return True
 
-    def parseNode(self,nodeConfig):
-        nodeType = nodeConfig.get("type","default")
+    def parseNode(self, nodeConfig):
+        nodeType = nodeConfig.get("type", "default")
         try:
             if nodeType == "Modbus":
-                node = ModbusNode(self,nodeConfig)
+                node = ModbusNode(self, nodeConfig)
             elif nodeType == "Function":
-                node = FunctionNode(self,nodeConfig)
+                node = FunctionNode(self, nodeConfig)
             elif nodeType == "MQTT":
-                node = MqttNode(self,nodeConfig)
+                node = MqttNode(self, nodeConfig)
             elif nodeType == "MBus":
-                node = MBusNode(self,nodeConfig)
+                node = MBusNode(self, nodeConfig)
             elif nodeType == "default":
-                node = Node(self,nodeConfig)
+                node = Node(self, nodeConfig)
             else:
-                logger.error("The node type was not recognized! (config = {})".format(nodeConfig))
+                logger.error(
+                    "The node type was not recognized! (config = {})".format(nodeConfig)
+                )
                 return False
         except:
-            logger.exception("The node could not be created! (config = {})".format(nodeConfig))
+            logger.exception(
+                "The node could not be created! (config = {})".format(nodeConfig)
+            )
             return False
         return self.addNode(node)
 
-    def addNode(self,node):
+    def addNode(self, node):
         if node.name in self.nodes:
-            logger.warning("A node with name '{}' already exists! Ignoring new node!".format(node.name))
+            logger.warning(
+                "A node with name '{}' already exists! Ignoring new node!".format(
+                    node.name
+                )
+            )
             return False
         else:
             self.nodes[node.name] = node
             logger.debug("Added node: {}".format(node))
             return True
 
-
-    def parseConnection(self,connectionConfig):
-        connectionType = connectionConfig.get("type","simple")
+    def parseConnection(self, connectionConfig):
+        connectionType = connectionConfig.get("type", "simple")
         try:
             if connectionType.lower() == "simple":
-                connection = SimpleConnection(self,connectionConfig)
+                connection = SimpleConnection(self, connectionConfig)
             elif connectionType.lower() == "conditional":
-                connection = ConditionalConnection(self,connectionConfig)
+                connection = ConditionalConnection(self, connectionConfig)
             elif connectionType.lower() == "custom":
-                connection = CustomConnection(self,connectionConfig)
+                connection = CustomConnection(self, connectionConfig)
             else:
-                logger.error("The connection type was not recognized! (config = {})".format(connectionConfig))
+                logger.error(
+                    "The connection type was not recognized! (config = {})".format(
+                        connectionConfig
+                    )
+                )
                 return False
         except:
-            logger.exception("The connection could not be created! (config = {})".format(connectionConfig))
+            logger.exception(
+                "The connection could not be created! (config = {})".format(
+                    connectionConfig
+                )
+            )
             return False
         return self.addConnection(connection)
 
-    def addConnection(self,connection):
+    def addConnection(self, connection):
         if connection.name in self.connections:
-            logger.warning("A connection with name '{}' already exists! Ignoring new connection!".format(connection.name))
+            logger.warning(
+                "A connection with name '{}' already exists! Ignoring new connection!".format(
+                    connection.name
+                )
+            )
             return False
         else:
             self.nodes[connection.name] = connection

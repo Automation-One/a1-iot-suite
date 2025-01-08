@@ -12,25 +12,26 @@ logger = logging.getLogger("AutomationOne")
 
 
 class MBusInterface(Interface):
-    def __init__(self,handler,config = {}):
-        super().__init__(handler,config)
+    def __init__(self, handler, config={}):
+        super().__init__(handler, config)
 
-        self.device = config.get("device",None)
-        self.host = config.get("host",None)
-        self.port = config.get("port",None)
-        self.use_api = config.get("use_api",True)
-        self.timeout = config.get("timeout",10)
+        self.device = config.get("device", None)
+        self.host = config.get("host", None)
+        self.port = config.get("port", None)
+        self.use_api = config.get("use_api", True)
+        self.timeout = config.get("timeout", 10)
         self.force_delay = config.get("force_delay", 1)
         self._lock = False
 
         if self.use_api is False:
-            logger.info(f"Use of API deactivated for {self.name}. Using console calls instead.")
+            logger.info(
+                f"Use of API deactivated for {self.name}. Using console calls instead."
+            )
         else:
             if self.device:
                 self.mbus = MBus(device=self.device)
             else:
-                self.mbus = MBus(host=self.host,port=self.port)
-
+                self.mbus = MBus(host=self.host, port=self.port)
 
             self.mbus.connect()
             logger.info(f"Successfully connected to Mbus {self.name}")
@@ -48,7 +49,7 @@ class MBusInterface(Interface):
         logger.warning("M-Bus write is not yet implemented!")
 
     def read_api(self, unit):
-        reply_data=None
+        reply_data = None
         result = None
         try:
             self.mbus.send_request_frame(unit)
@@ -57,33 +58,37 @@ class MBusInterface(Interface):
             result = self.mbus.frame_data_xml(reply_data)
 
         except:
-            logger.error(f"Error during read from M-Bus {self.name} with address {unit}")
+            logger.error(
+                f"Error during read from M-Bus {self.name} with address {unit}"
+            )
         if reply_data:
             self.mbus.frame_data_free(reply_data)
         return result
 
-    def read_console(self,unit):
+    def read_console(self, unit):
         command = f"mbus-serial-request-data -b 2400 {self.device} {unit}"
         logger.debug(f"Calling Console command '{command}'.")
         try:
-            result = subprocess.check_output(command.split(' '),timeout=self.timeout)
+            result = subprocess.check_output(command.split(" "), timeout=self.timeout)
         except:
-            logger.error(f"[{self.name}] Exception found during subprocess call to mbus.")
+            logger.error(
+                f"[{self.name}] Exception found during subprocess call to mbus."
+            )
             result = ""
         return result
 
     def read(self, unit):
         while self._lock:
             time.sleep(0.05)
-        self._lock=True
+        self._lock = True
         if self.use_api is True:
             result = self.read_api(unit)
-        elif isinstance(self.use_api, dict) and self.use_api.get(unit,True):
+        elif isinstance(self.use_api, dict) and self.use_api.get(unit, True):
             result = self.read_api(unit)
         else:
             result = self.read_console(unit)
 
         if self.force_delay:
             time.sleep(self.force_delay)
-        self._lock=False
+        self._lock = False
         return result

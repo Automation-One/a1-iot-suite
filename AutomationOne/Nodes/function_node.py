@@ -1,13 +1,13 @@
-
 from datetime import timedelta
 
 from .node import Node
 
+
 class FunctionNode(Node):
     def __init__(self, handler, config):
-        super().__init__(handler,config)
+        super().__init__(handler, config)
         self.callbackName = config.get("callback")
-        self.frequency = config.get("frequency",None)
+        self.frequency = config.get("frequency", None)
         self.callback = getattr(handler.callbackModule, self.callbackName)
 
     def call(self):
@@ -22,4 +22,4 @@ class FunctionNode(Node):
         self.no_onchange_forward = True
         self.call()
         self.no_onchange_forward = False
-        return True;
+        return True
