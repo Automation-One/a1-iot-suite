@@ -55,8 +55,7 @@ nodes:
     interface: *mod
     unit: 11
     address: 0
-    accessType: read
-    HoldingRegister: False
+    functionCode: 4
     dataType: uint16
     pollRate: 2
     sensitivity: 10
@@ -67,7 +66,7 @@ nodes:
     interface: *mod
     unit: 12
     address: 0
-    accessType: write
+    functionCode: 16
     dataType: int16
     onChange: logValue
 
