@@ -82,25 +82,33 @@ class ModbusInterface(Interface):
         if self.force_delay_per_unit:
             self.unit_lock[unit] = time.time() + self.force_delay_per_unit
 
-    def write(self, registers, address, unit=None):
+    def write(self, functionCode, registers, address, unit=None):
         self.check_lock(unit)
         if tuple(map(int, PYMODBUS_VERSION.split("."))) < (3, 3, 0):
             unit_args = {"unit": unit}
         else:
             unit_args = {"slave": unit}
-        self.client_modbus.write_registers(address, registers, **unit_args)
 
-    def read(self, address, count, unit, holding=False):
+        if functionCode == 6:
+            if len(registers) > 1:
+                logger.warning(
+                    "FunctionCode 6 only supports writing to one (16 bit) register! (Ignoring additional registers)"
+                )
+            self.client_modbus.write_register(address, registers[0], **unit_args)
+        elif functionCode == 16:
+            self.client_modbus.write_registers(address, registers, **unit_args)
+
+    def read(self, functionCode, address, count=None, unit=None):
         self.check_lock(unit)
         if tuple(map(int, PYMODBUS_VERSION.split("."))) < (3, 3, 0):
             unit_args = {"unit": unit}
         else:
             unit_args = {"slave": unit}
-        if holding:
+        if functionCode == 3:
             result = self.client_modbus.read_holding_registers(
                 address=address, count=count, **unit_args
             )
-        else:
+        elif functionCode == 4:
             result = self.client_modbus.read_input_registers(
                 address=address, count=count, **unit_args
             )

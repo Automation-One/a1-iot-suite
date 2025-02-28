@@ -11,6 +11,9 @@ from .node import Node
 
 logger = logging.getLogger("AutomationOne")
 
+read_function_types = [3, 4]
+write_function_types = [6, 16]
+
 
 class ModbusNode(Node):
     def __init__(self, handler, config):
@@ -58,16 +61,37 @@ class ModbusNode(Node):
                 f"DataType {self.dataType} not implemented for ModbusNode."
             )
 
-        self.holding = config.get("HoldingRegister", False)
-
-        self.accessType = config.get("accessType")
-        self.read = not (self.accessType == "write")
-        if self.accessType and self.accessType not in ["read", "write"]:
+        if "accessType" in config:
             logger.warning(
-                f"AccessType '{self.accessType}' for Modbus Node {self.name} not recognized. Assuming read access."
+                "accessType has been deprecated. Please switch to using functionCode."
+            )
+        if "HoldingRegister" in config:
+            logger.warning(
+                "HoldingRegister has been deprecated. Please switch to using functionCode."
             )
 
-        self.doOnStartup = config.get("doOnStartup", self.read)
+        self.functionCode = config.get("functionCode")
+        if self.functionCode is None and config.get("accessType"):
+            read = not (config.get("accessType") == "write")
+            holding = config.get("HoldingRegister", False)
+            if read and holding:
+                self.functionCode = 3
+            elif read and not holding:
+                self.functionCode = 4
+            else: # write
+                self.functionCode = 16
+            logger.info(
+                f"FunctionCode not specified. Using {self.functionCode} based on accessType and HoldingRegister."
+            )
+
+        if self.functionCode not in [3, 4, 6, 16]:
+            raise NotImplementedError(
+                f"FunctionCode {self.functionCode} not implemented for Modbus."
+            )
+
+        self.doOnStartup = config.get(
+            "doOnStartup", self.functionCode in read_function_types
+        )  # Per default perform read on startup but not write
 
         self.pollRate = config.get("pollRate", None)
         logger.debug(config)
@@ -79,12 +103,15 @@ class ModbusNode(Node):
             self.pushValue()
 
     def pullValue(self, no_onchange_forward=False):
-        if not self.read:
+        if self.functionCode in write_function_types:
             return self.value
 
         for i in range(self.retries):
             data = self.interface.read(
-                self.address, self._count, self.unit, self.holding
+                address=self.address,
+                functionCode=self.functionCode,
+                count=self._count,
+                unit=self.unit,
             )
             # logger.debug("[Node {}] received data: {}".format(self.name,data))
             try:
@@ -128,12 +155,12 @@ class ModbusNode(Node):
 
     def _init_timeloop(self, timeloop):
         super()._init_timeloop(timeloop)
-        if self.read and self.pollRate:
+        if self.functionCode in read_function_types and self.pollRate:
             timeloop._add_job(self.pullValue, timedelta(seconds=self.pollRate))
             logger.debug("Added {} to Timeloop.".format(self.name))
 
     def pushValue(self):
-        if self.read:
+        if self.functionCode in read_function_types:
             return
         builder = BinaryPayloadBuilder(
             byteorder=self.byteorder, wordorder=self.wordorder
@@ -159,10 +186,15 @@ class ModbusNode(Node):
         elif self.dataType == "float64":
             builder.add_64bit_float(float(self.value))
         registers = builder.to_registers()
-        self.interface.write(registers, self.address, self.unit)
+        self.interface.write(
+            functionCode=self.functionCode,
+            registers=registers,
+            address=self.address,
+            unit=self.unit,
+        )
 
     def onDemandUpdate(self):
-        if self.read:
+        if self.functionCode in read_function_types:
             self.pullValue(no_onchange_forward=True)
             logger.debug(f"[{self.name}] Modbus value pulled due to demand.")
             return True
