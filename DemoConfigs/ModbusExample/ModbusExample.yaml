@@ -14,8 +14,7 @@ nodes:
     interface: Modbus Interface
     unit: 1
     address: 64
-    accessType: read
-    HoldingRegister: True
+    functionCode: 3
     dataType: float32
     pollRate:  15
     sensitivity: 0.1
@@ -26,7 +25,7 @@ nodes:
     unit: 2
     address: 12
     dataType: float32
-    accessType: write
+    functionCode: 16
 
 connections:
   - name: Drehschalter - Ventil

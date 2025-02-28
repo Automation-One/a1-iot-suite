@@ -14,8 +14,7 @@ nodes:
     interface: Modbus Interface
     unit: 1
     address: 1000
-    accessType: read
-    HoldingRegister: True
+    functionCode: 3
     dataType: int32i
     pollRate: 5
     sensitivity: 0 # log value / perform connections after every poll regardless if a change happend

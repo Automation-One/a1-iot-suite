@@ -23,8 +23,7 @@ nodes:
     interface: Modbus Interface
     unit: 1
     address: 64
-    accessType: read
-    HoldingRegister: True
+    functionCode: 3
     dataType: float32
     pollRate:  15
     sensitivity: 0.1
