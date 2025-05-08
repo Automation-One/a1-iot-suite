@@ -17,6 +17,15 @@ from timeloop import Timeloop
 logger = logging.getLogger("AutomationOne")
 
 
+def return_None_on_fail(func):
+    def wrapper(*args,**kwargs):
+        try:
+            return func(*args,**kwargs)
+        except:
+            logger.exception(f"An unexpected error occurred during {func.__name__} with args: {args} and kwargs: {kwargs}")
+        return None
+    return wrapper
+
 def initLogger(config):
     if not "version" in config:
         config["version"] = 1
@@ -99,7 +108,7 @@ class Handler:
             logger.warning("Timeloop is not running. Cannot register jobs.")
             return False
         for callback, frequency in callbacks:
-            self._register_timeloop_job(callback, frequency)
+            self._register_timeloop_job(return_None_on_fail(callback), frequency)
 
 
     def _create_timeloop(self):
