@@ -13,10 +13,11 @@ class FunctionNode(Node):
     def call(self):
         self.callback(self)
 
-    def _init_timeloop(self, timeloop):
-        super()._init_timeloop(timeloop)
+    def get_timeloop_callbacks(self):
+        callbacks = super().get_timeloop_callbacks()
         if self.frequency:
-            timeloop._add_job(self.call, timedelta(seconds=self.frequency))
+            callbacks.append((self.call, timedelta(seconds=self.frequency)))
+        return callbacks
 
     def onDemandUpdate(self):
         self.no_onchange_forward = True

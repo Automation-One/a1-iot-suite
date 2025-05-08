@@ -40,9 +40,11 @@ class Connection:
         if self.doOnStartup:
             self.execute()
 
-    def _init_timeloop(self, timeloop):
+    def get_timeloop_callbacks(self):
+        callbacks = []
         if self.frequency:
-            timeloop._add_job(self.execute, timedelta(seconds=float(self.frequency)))
+            callbacks.append((self.execute, timedelta(seconds=float(self.frequency))))
+        return callbacks
 
     def execute(self):
         if self.delay:

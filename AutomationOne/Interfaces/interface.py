@@ -18,5 +18,5 @@ class Interface:
     def stop(self):
         pass
 
-    def _init_timeloop(self, timeloop):
-        pass
+    def get_timeloop_callbacks(self):
+        return []

@@ -87,5 +87,5 @@ class Node:
     def registerResultOf(self, connection):
         self.result_of.append(connection)
 
-    def _init_timeloop(self, timeloop):
-        pass
+    def get_timeloop_callbacks(self):
+        return []

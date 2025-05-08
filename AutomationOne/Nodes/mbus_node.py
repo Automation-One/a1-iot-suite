@@ -60,11 +60,11 @@ class MBusNode(Node):
         self.setValue(value, no_onchange_forward=no_onchange_forward)
         return value
 
-    def _init_timeloop(self, timeloop):
-        super()._init_timeloop(timeloop)
+    def get_timeloop_callbacks(self):
+        callbacks = super().get_timeloop_callbacks()
         if self.pollRate:
-            timeloop._add_job(self.pullValue, timedelta(seconds=self.pollRate))
-            logger.debug("Added {} to Timeloop.".format(self.name))
+            callbacks.append((self.pullValue, timedelta(seconds=self.pollRate)))
+        return callbacks
 
     def pushValue(self):
         logger.warning("Push not implemented for MBus.")

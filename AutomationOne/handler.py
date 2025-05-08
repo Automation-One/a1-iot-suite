@@ -86,16 +86,30 @@ class Handler:
                 logger.exception("Exception during initCallback2!")
         self._start()
 
+    def _register_timeloop_job(self, callback, interval):
+        if not self.timeloop:
+            logger.warning("Timeloop is not running. Cannot register job.")
+            return False
+        logger.debug(f"Registering job {callback.__name__} with interval {interval}")
+        self.timeloop._add_job(callback, interval)
+        return True
+
+    def _register_timeloop_jobs(self, callbacks):
+        if not self.timeloop:
+            logger.warning("Timeloop is not running. Cannot register jobs.")
+            return False
+        for callback, frequency in callbacks:
+            self._register_timeloop_job(callback, frequency)
+
+
     def _create_timeloop(self):
         if not self.timeloop:
             self.timeloop = Timeloop()
             logging.getLogger("timeloop").setLevel(logging.CRITICAL)
-            for interface in self.interfaces.values():
-                interface._init_timeloop(self.timeloop)
-            for node in self.nodes.values():
-                node._init_timeloop(self.timeloop)
-            for connection in self.connections.values():
-                connection._init_timeloop(self.timeloop)
+            for collection in [self.interfaces, self.nodes, self.connections]:
+                for item in collection.values():
+                    callbacks = item.get_timeloop_callbacks()
+                    self._register_timeloop_jobs(callbacks)
             return True
         return False
 
